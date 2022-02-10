@@ -53,12 +53,12 @@ void test(SignGen* sign)
 		//printf("验证成功\n");
 	}
 }
-void test_time(int i)
+void test_time()
 {
 	clock_t start, finish;
 	start = clock();
 
-	if(i == GMP_ )
+	if(Cont.gmp_)
 	{
 		SignGen sign;
 		for (int i = 0; i < 500; i++)
@@ -66,7 +66,7 @@ void test_time(int i)
 			test(&sign);
 		}		
 	}
-	else if(i == stdECDSA_)
+	else if(Cont.openssl_)
 	{
 		EC_GROUP* group1;
 		EC_KEY* key1;
@@ -89,28 +89,9 @@ void test_time(int i)
 
 int main(int argc,char** argv)
 {
-	switch (argc)
-	{
-	case 1:
-		test_time(GMP_);
-		break;
-	case 2:
-		if(strcmp((const char*)argv[1],"GMP")==0||strcmp((const char*)argv[1],"gmp")==0)
-		{
-			test_time(GMP_);
-		}
-		else if(strcmp((const char*)argv[1],"OPENSSL")==0||strcmp((const char*)argv[1],"openssl")==0)
-		{
-			test_time(stdECDSA_);
-		}
-		break;
-	default:
-		test_time(GMP_);
-		break;
-	}
+	Cont.InitControl(argc,argv);
+	test_time();
 	//get_std_curve_name();
-	
-
 }
 
 

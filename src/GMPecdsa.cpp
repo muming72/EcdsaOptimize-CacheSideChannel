@@ -119,7 +119,7 @@ bool SignVerify::Ecdsa_sign_verify(EllPoint* Q, const char* m, mpz_t r, mpz_t s)
 	
 	if (mpz_cmp(r,P256Para.n)>=0|| mpz_cmp(s, P256Para.n) >= 0)
 	{
-		printf("ÑéÖ¤Ê§°Ü£ºN");
+		printf("ï¿½ï¿½Ö¤Ê§ï¿½Ü£ï¿½N");
 		return false;
 	}
 	
@@ -137,7 +137,7 @@ bool SignVerify::Ecdsa_sign_verify(EllPoint* Q, const char* m, mpz_t r, mpz_t s)
 		mpz_clear(w);
 		mpz_clear(u1);
 		mpz_clear(u2);
-		printf("ÑéÖ¤Ê§°Ü£ºinf");
+		printf("ï¿½ï¿½Ö¤Ê§ï¿½Ü£ï¿½inf");
 		return false;
 	}
 	mpz_set(u1, p1.x);
@@ -149,14 +149,14 @@ bool SignVerify::Ecdsa_sign_verify(EllPoint* Q, const char* m, mpz_t r, mpz_t s)
 		mpz_clear(w);
 		mpz_clear(u1);
 		mpz_clear(u2);
-		//printf("Ç©ÃûÑéÖ¤³É¹¦\n\n");
+		//printf("Ç©ï¿½ï¿½ï¿½ï¿½Ö¤ï¿½É¹ï¿½\n\n");
 		return true;
 	}
 	mpz_clear(E);
 	mpz_clear(w);
 	mpz_clear(u1);
 	mpz_clear(u2);
-	printf("ÑéÖ¤Ê§°Ü£ºuv");
+	printf("ï¿½ï¿½Ö¤Ê§ï¿½Ü£ï¿½uv");
 	return false;
 }
 

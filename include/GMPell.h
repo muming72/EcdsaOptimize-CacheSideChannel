@@ -3,7 +3,7 @@
 #if MODE_ == GMP_ 
 using namespace std;
 
-#ifdef FpEll_
+
 void Fp_Mul(mpz_t rop, mpz_t op1, mpz_t op2, mpz_t p);
 void Fp_Add(mpz_t rop, mpz_t op1, mpz_t op2, mpz_t p);
 void Fp_Sub(mpz_t rop, mpz_t op1, mpz_t op2, mpz_t p);
@@ -12,6 +12,8 @@ void Mpz2wNAF(mpz_t k, vector<long int>& wNaf, int w);
 class EllPoint
 {
 private:
+	void FixedMul(mpz_t k);
+	void wNafMul(mpz_t k, EllPoint* op);
 public:
 	mpz_t x;
 	mpz_t y;
@@ -32,12 +34,10 @@ public:
 	void Add(EllPoint* rop, EllPoint* op);
 	void Sub(EllPoint* p, EllPoint* q);
 	void Mul(mpz_t k, EllPoint* op);
-#ifdef FixedPoint_
-	void FixedMul(mpz_t k);
+	
 #endif
 };
 
-#ifdef FixedPoint_
 class FixedPoint
 {
 public:
@@ -60,7 +60,5 @@ public:
 	}
 };
 extern FixedPoint FixPoint;
-#endif // FixedPoint_
 
-#endif // !FpEll_
-#endif //GMP_
+

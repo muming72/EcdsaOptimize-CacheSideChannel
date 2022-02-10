@@ -3,7 +3,8 @@
 #if MODE_ == GMP_ 
 #ifdef FpEll_
 FpEllPara P256Para;
-
+FixedPoint FixPoint;
+Control Cont;	
 
 void Fp_Mul(mpz_t rop, mpz_t op1, mpz_t op2, mpz_t p)
 {
@@ -354,16 +355,8 @@ void EllPoint::Sub(EllPoint* p, EllPoint* q)
 }
 
 
-#ifdef wNAF
-void EllPoint::Mul(mpz_t k, EllPoint* op)
+void EllPoint::wNafMul(mpz_t k, EllPoint* op)
 {
-#ifdef FixedPoint_
-	if (mpz_cmp(op->x, P256Para.x) == 0 && mpz_cmp(op->y, P256Para.y) == 0)
-	{
-		FixedMul(k);
-		return;
-	}
-#endif // FixedPoint_
 	vector<long int> Naf;
 	Mpz2wNAF(k, Naf, NAF_WIN_LEN);
 	int d = 1 << NAF_WIN_LEN;
@@ -395,36 +388,6 @@ void EllPoint::Mul(mpz_t k, EllPoint* op)
 	}
 	Setp(&inf);
 }
-#else
-void EllPoint::Mul(mpz_t k, EllPoint* op)
-{
-#ifdef FixedPoint_
-	if (mpz_cmp(op->x, P256Para.x) == 0 && mpz_cmp(op->y, P256Para.y) == 0)
-	{
-		FixedMul(k);
-		return;
-	}
-#endif // FixedPoint_
-	if (op->Is_inf())
-	{
-		Setp(op);
-		return;
-	}
-	EllPoint inf;
-	for (int i = mpz_sizeinbase(k, 2) - 1; i >= 0; i--)
-	{
-		inf.Pdouble(&inf);
-		if (mpz_tstbit(k, i))
-		{
-			inf.Add(&inf, op);
-		}
-	}
-	Setp(&inf);
-}
-#endif//wNAF
-
-#ifdef FixedPoint_
-FixedPoint FixPoint;
 void EllPoint::FixedMul(mpz_t k)
 {
 	vector<long int> Naf;
@@ -445,7 +408,35 @@ void EllPoint::FixedMul(mpz_t k)
 	}
 	Setp(&inf);
 }
-#endif //FixedPoint_
+void EllPoint::Mul(mpz_t k, EllPoint* op)
+{
+
+	if (Cont.Fixed_base_ && mpz_cmp(op->x, P256Para.x) == 0 && mpz_cmp(op->y, P256Para.y) == 0)
+	{
+		FixedMul(k);
+		return;
+	}
+	else if(Cont.wNaf)
+	{
+		wNafMul(k,op);
+		return;
+	}
+	if (op->Is_inf())
+	{
+		Setp(op);
+		return;
+	}
+	EllPoint inf;
+	for (int i = mpz_sizeinbase(k, 2) - 1; i >= 0; i--)
+	{
+		inf.Pdouble(&inf);
+		if (mpz_tstbit(k, i))
+		{
+			inf.Add(&inf, op);
+		}
+	}
+	Setp(&inf);
+}
 
 #endif // FpEll_
 #endif//GMP_
