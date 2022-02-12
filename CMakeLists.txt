@@ -9,6 +9,7 @@ INCLUDE_DIRECTORIES(include)
 file(GLOB SOURCE "src/*.cpp" )
 SET(EXECUTABLE_OUTPUT_PATH /home/keln/project/dc/bin)
 SET(LIBRARY_OUTPUT_PATH /home/keln/project/dc/lib)
+SET(CMAKE_BUILD_TYPE "Debug")
 
 SET(PROJECT_LINK_LIBS libssl.so libgmp.so libcrypto.so)
 

@@ -1,11 +1,147 @@
 #include"GMPell.h"
 
-#if MODE_ == GMP_ 
-#ifdef FpEll_
 FpEllPara P256Para;
 FixedPoint FixPoint;
 Control Cont;	
 
+void Fast_mod256(mpz_t rop, mpz_t op)
+{
+	unsigned long long int myop[16]={0};
+	for(int i=0;i< op->_mp_size;i++)
+	{
+		myop[2*i] = (unsigned int)op->_mp_d[i];
+		myop[2*i+1] = (unsigned int)(op->_mp_d[i]>>32);
+	}
+	unsigned long long int mid=0;
+	unsigned int c[9];
+
+	mid = myop[0]+myop[8]+myop[9];
+	c[0]=(unsigned int)mid;
+	mid = mid>>32;
+
+	mid = myop[1]+myop[9]+myop[10]+mid;
+	c[1]=(unsigned int)mid;
+	mid = mid>>32;
+
+	mid = myop[2]+myop[10]+myop[11]+mid;
+	c[2]=(unsigned int)mid;
+	mid = mid>>32;
+
+	mid = myop[3]+2*myop[11]+2*myop[12]+myop[13]+mid;
+	c[3]=(unsigned int)mid;
+	mid = mid>>32;
+
+	mid = myop[4]+2*myop[12]+2*myop[13]+myop[14]+mid;
+	c[4]=(unsigned int)mid;
+	mid = mid>>32;
+
+	mid = myop[5]+2*myop[13]+2*myop[14]+myop[15]+mid;
+	c[5]=(unsigned int)mid;
+	mid = mid>>32;
+
+	mid = myop[6]+3*myop[14]+2*myop[15]+myop[13]+mid;
+	c[6]=(unsigned int)mid;
+	mid = mid>>32;
+
+	mid = myop[7]+3*myop[15]+myop[8]+mid;
+	c[7]=(unsigned int)mid;
+	mid = mid>>32;
+
+	c[8]=mid;
+
+	unsigned int d[9];
+	mid = myop[11]+myop[12]+myop[13]+myop[14];
+	d[0]=(unsigned int)mid;
+	mid = mid>>32;
+
+	mid = myop[15]+myop[12]+myop[13]+myop[14]+mid;
+	d[1]=(unsigned int)mid;
+	mid = mid>>32;
+
+	mid = myop[15]+myop[13]+myop[14]+mid;
+	d[2]=(unsigned int)mid;
+	mid = mid>>32;
+
+	mid = myop[15]+myop[8]+myop[9]+mid;
+	d[3]=(unsigned int)mid;
+	mid = mid>>32;
+
+	mid = myop[9]+myop[10]+mid;
+	d[4]=(unsigned int)mid;
+	mid = mid>>32;
+
+	mid = myop[11]+myop[10]+mid;
+	d[5]=(unsigned int)mid;
+	mid = mid>>32;
+
+	mid = myop[8]+myop[9]+mid;
+	d[6]=(unsigned int)mid;
+	mid = mid>>32;
+
+	mid = myop[11]+myop[12]+myop[13]+myop[10]+mid;
+	d[7]=(unsigned int)mid;
+	mid = mid>>32;
+
+	d[8]=mid;
+
+	mpz_t mpzc,mpzd;
+	mpz_init2(mpzc,512);
+	mpz_init2(mpzd,512);
+
+	mpz_import(mpzc,9,-1,4,0,0,c);
+	mpz_import(mpzd,9,-1,4,0,0,d);
+	mpz_sub(mpzc,mpzc,mpzd);
+	
+	while(mpz_cmp(mpzc,P256Para.p)>=0)
+	{
+		mpz_sub(mpzc,mpzc,P256Para.p);
+	}
+	while(mpz_cmp_si(mpzc,0)<0)
+	{
+		mpz_add(mpzc,mpzc,P256Para.p);
+	}
+	mpz_set(rop,mpzc);
+	mpz_clear(mpzc);
+	mpz_clear(mpzd);
+}
+void Barrett_modN(mpz_t rop,mpz_t op)
+{
+	mpz_t q,r;
+	mpz_init(q);
+	mpz_init(r);
+
+	mpz_fdiv_q_2exp(q,op,255);
+	mpz_mul(q,q,P256Para.u);
+	mpz_fdiv_q_2exp(q,q,257);
+
+	mpz_fdiv_r_2exp(r,op,257);
+	mpz_mul(q,q,P256Para.n);
+	mpz_fdiv_r_2exp(q,q,257);
+	mpz_sub(r,r,q);
+	if(mpz_cmp_si(r,0)<0)
+	{
+		mpz_t b;
+		mpz_init_set_si(b,1);
+		mpz_mul_2exp(b,b,257);
+		mpz_add(r,r,b);
+		mpz_clear(b);
+	}
+	while(mpz_cmp(r,P256Para.n)>=0)
+	{
+		mpz_sub(r,r,P256Para.n);
+	}
+	mpz_set(rop,r);
+	mpz_clear(q);
+	mpz_clear(r);
+}
+void mpz_printf(mpz_t op)
+{
+	for(int i=op->_mp_size-1;i>=0;i--)
+	{
+		printf("%lx",op->_mp_d[i]);
+	}
+	printf("\n");
+}
 void Fp_Mul(mpz_t rop, mpz_t op1, mpz_t op2, mpz_t p)
 {
 	mpz_mul(rop, op1, op2);
@@ -347,7 +483,10 @@ void EllPoint::Sub(EllPoint* p, EllPoint* q)
 	EllPoint mi;
 	unsigned long int zero = 0;
 	mpz_t y;
-	mpz_init_set_si(y,0);
+	mpz_init_set_ui(y,0);
+	//mpz_init(y);
+	//mpz_neg(y,y);
+	//mpz_mod(y,y,P256Para.p);
 	Fp_Sub(y, y, q->y, P256Para.p);
 	mi.Setp(q->x, y);
 	Add(p, &mi);
@@ -437,6 +576,3 @@ void EllPoint::Mul(mpz_t k, EllPoint* op)
 	}
 	Setp(&inf);
 }
-
-#endif // FpEll_
-#endif//GMP_

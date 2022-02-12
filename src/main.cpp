@@ -1,7 +1,5 @@
 ﻿#include"GMPecdsa.h"
-#include<time.h>
-#include<openssl/ecdsa.h>
-#include<openssl/sha.h>
+
 
 #define  Message "information security"
 
@@ -20,7 +18,6 @@ void teststd(EC_KEY* key1)
 		//EC_KEY_print(a, key1, 13);
 	}
 }
-	
 void get_std_curve_name()
 {
 	EC_builtin_curve* curves = NULL, * p;
@@ -52,6 +49,25 @@ void test(SignGen* sign)
 	{
 		//printf("验证成功\n");
 	}
+}
+void testmpz()
+{
+	mpz_t a,b;
+	mpz_init_set_str(a,"7efba1662985be9403cb055c75d4f7e0ce8d84a9c5114abcaf3177680104fa0d7efba1662985be9403cb055c75d4f7e0ce8d84a9c5114abcaf317",16);
+	mpz_init(b);
+
+	clock_t start, finish;
+	start = clock();
+for(int i=0;i<10000000;i++)
+{
+	//mpz_mod(b,a,P256Para.n);
+	Fast_mod256(b,a);
+	//Barrett_modN(b,a);
+}	
+	mpz_printf(b);
+	finish = clock();
+	double Total_time = (double)(finish - start) / CLOCKS_PER_SEC;
+	printf("%f seconds\n", Total_time);
 }
 void test_time()
 {
@@ -86,12 +102,13 @@ void test_time()
 }
 
 
-
 int main(int argc,char** argv)
 {
-	Cont.InitControl(argc,argv);
-	test_time();
+	//Cont.InitControl(argc,argv);
+	//test_time();
 	//get_std_curve_name();
+	testmpz();
+
 }
 
 

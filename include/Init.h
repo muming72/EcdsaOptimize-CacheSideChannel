@@ -1,12 +1,14 @@
 #pragma once
-#include"control.h"
 #include<stdio.h>
 #include<string.h>
 #include<stdlib.h>
 #include<gmp.h>
 #include<vector>
+#include<time.h>
+#include<openssl/sha.h>
+#include<openssl/ecdsa.h>
 using namespace std;
-
+#define Para_ 256//192,224,256,384,521
 #define NAF_WIN_LEN 6//>=2
 
 #if Para_ == 192
@@ -42,6 +44,7 @@ using namespace std;
 #define PARA_R "7efba1662985be9403cb055c75d4f7e0ce8d84a9c5114abcaf3177680104fa0d" 
 #define PARA_S "c49d360886e704936a6678e1139d26b7819f7e90" 
 #define PARA_N "ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551"
+#define PARA_U "1 00000000 ffffffff fffffffe ffffffff 43190552 df1a6c21 012ffd85 eedf9bfe"
 #elif Para_ == 384
 #define ParaSize_ 384
 #define Fixedlen 390
@@ -81,6 +84,7 @@ public:
 		mpz_init_set_str(r, PARA_R, 16);
 		mpz_init_set_str(S, PARA_S, 16);
 		mpz_init_set_str(n, PARA_N, 16);
+		mpz_init_set_str(u, PARA_U, 16);
 	}
 	~FpEllPara()
 	{
@@ -92,6 +96,7 @@ public:
 		mpz_clear(r);
 		mpz_clear(S);
 		mpz_clear(n);
+		mpz_clear(u);
 	}
 	mpz_t p;
 	mpz_t x;
@@ -101,6 +106,7 @@ public:
 	mpz_t r;
 	mpz_t S;
 	mpz_t n;
+	mpz_t u;
 };
 extern FpEllPara P256Para;
 
