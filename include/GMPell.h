@@ -1,14 +1,17 @@
 #pragma once
 #include"Init.h"
 using namespace std;
-
+#define ModN 1
+#define ModP 0
 
 void mpz_printf(mpz_t op);
 void Fast_mod256(mpz_t rop, mpz_t op);
 void Barrett_modN(mpz_t rop,mpz_t op);
-void Fp_Mul(mpz_t rop, mpz_t op1, mpz_t op2, mpz_t p);
-void Fp_Add(mpz_t rop, mpz_t op1, mpz_t op2, mpz_t p);
-void Fp_Sub(mpz_t rop, mpz_t op1, mpz_t op2, mpz_t p);
+void Fp_mod(mpz_t rop,mpz_t op,int modnum);
+inline void Fp_Mul(mpz_t rop, mpz_t op1, mpz_t op2);
+void Fp_MulN(mpz_t rop, mpz_t op1, mpz_t op2);
+inline void Fp_Add(mpz_t rop, mpz_t op1, mpz_t op2);
+inline void Fp_Sub(mpz_t rop, mpz_t op1, mpz_t op2);
 void Mpz2wNAF(mpz_t k, vector<long int>& wNaf, int w);
 
 class EllPoint
@@ -36,8 +39,8 @@ public:
 	void Add(EllPoint* rop, EllPoint* op);
 	void Sub(EllPoint* p, EllPoint* q);
 	void Mul(mpz_t k, EllPoint* op);
+	void MulP(mpz_t k, EllPoint* op);
 };
-
 class FixedPoint
 {
 public:

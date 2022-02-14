@@ -41,29 +41,33 @@ void get_std_curve_name()
 }
 void test(SignGen* sign)
 {
-	
-	//sign->key_pair_gen();
-	sign->Ecdsa_sign_gen(Message);
-	//sign->print();
-	if (SignVerify::Ecdsa_sign_verify(&(sign->Q), Message, sign->r, sign->s))
+	for (int i = 0; i < 500; i++)
 	{
-		//printf("验证成功\n");
-	}
+		//sign->key_pair_gen();
+		sign->Ecdsa_sign_gen(Message);
+		//sign->print();
+		if (SignVerify::Ecdsa_sign_verify(&(sign->Q), Message, sign->r, sign->s))
+		{
+			//printf("验证成功\n");
+		}
+	}	
 }
 void testmpz()
 {
 	mpz_t a,b;
-	mpz_init_set_str(a,"7efba1662985be9403cb055c75d4f7e0ce8d84a9c5114abcaf3177680104fa0d7efba1662985be9403cb055c75d4f7e0ce8d84a9c5114abcaf317",16);
+	mpz_init_set_str(a,"e00d7efba1662985be9403cb055c75d4f7e0ce8d84a9c5114abcaf3",16);
 	mpz_init(b);
 
 	clock_t start, finish;
 	start = clock();
-for(int i=0;i<10000000;i++)
+for(int i=0;i<1;i++)
 {
 	//mpz_mod(b,a,P256Para.n);
 	Fast_mod256(b,a);
 	//Barrett_modN(b,a);
 }	
+	mpz_printf(b);
+	mpz_mod(b,a,P256Para.p);
 	mpz_printf(b);
 	finish = clock();
 	double Total_time = (double)(finish - start) / CLOCKS_PER_SEC;
@@ -77,10 +81,7 @@ void test_time()
 	if(Cont.gmp_)
 	{
 		SignGen sign;
-		for (int i = 0; i < 500; i++)
-		{
-			test(&sign);
-		}		
+		test(&sign);
 	}
 	else if(Cont.openssl_)
 	{
@@ -104,10 +105,9 @@ void test_time()
 
 int main(int argc,char** argv)
 {
-	//Cont.InitControl(argc,argv);
-	//test_time();
+	Cont.InitControl(argc,argv);test_time();
 	//get_std_curve_name();
-	testmpz();
+//	testmpz();
 
 }
 

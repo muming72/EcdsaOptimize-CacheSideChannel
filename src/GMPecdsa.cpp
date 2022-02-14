@@ -1,5 +1,4 @@
 #include"GMPecdsa.h"
-#if MODE_ == GMP_ 
 
 SignGen::SignGen()
 {
@@ -66,7 +65,7 @@ void SignGen::key_pair_gen()
 	do
 	{ 
 		get_random(d);
-		Q.Mul(d, &P);
+		Q.MulP(d, &P);
 	} while (!key_vali());
 }
 void SignGen::Ecdsa_sign_gen( const char* m)
@@ -79,7 +78,7 @@ void SignGen::Ecdsa_sign_gen( const char* m)
 	EllPoint q;
 	do{	
 		get_random(k);
-		q.Mul(k, &P);
+		q.MulP(k, &P);
 		mpz_set(r, q.x);
 		mpz_mod(r, r, P256Para.n);
 	} while (mpz_cmp_si(r,0)==0);
@@ -87,9 +86,14 @@ void SignGen::Ecdsa_sign_gen( const char* m)
 
 	HashToMpz(m, E);
 	mpz_invert(k_, k, P256Para.n);
-	Fp_Mul(dr, d, r, P256Para.n);
-	Fp_Add(E, E, dr, P256Para.n);
-	Fp_Mul(s, k_, E, P256Para.n);
+	Fp_MulN(dr, d, r);
+	//Fp_Add(E, E, dr, ModN);
+	mpz_add(E,E,dr);
+	if(mpz_cmp(E,P256Para.n)>=0)
+	{
+		mpz_sub(E,E,P256Para.n);
+	}
+	Fp_MulN(s, k_, E);
 
 	mpz_clear(k);
 	mpz_clear(k_);
@@ -105,7 +109,6 @@ void SignGen::print()
 	gmp_printf("Signature:\nr:%Zd\ns:%Zd\n", r,s);
 }
 
-
 bool SignVerify::Ecdsa_sign_verify(EllPoint* Q, const char* m, mpz_t r, mpz_t s)
 {
 	
@@ -119,16 +122,16 @@ bool SignVerify::Ecdsa_sign_verify(EllPoint* Q, const char* m, mpz_t r, mpz_t s)
 	
 	if (mpz_cmp(r,P256Para.n)>=0|| mpz_cmp(s, P256Para.n) >= 0)
 	{
-		printf("��֤ʧ�ܣ�N");
+		printf("N error\n");
 		return false;
 	}
 	
 	HashToMpz(m, E);
 	mpz_invert(w, s, P256Para.n);
 
-	Fp_Mul(u1, E, w, P256Para.n);
-	Fp_Mul(u2, r, w, P256Para.n);
-	p1.Mul(u1, &P);
+	Fp_MulN(u1, E, w);
+	Fp_MulN(u2, r, w);
+	p1.MulP(u1, &P);
 	q1.Mul(u2, Q);
 	p1.Add(&p1, &q1);
 	if (p1.Is_inf())
@@ -137,7 +140,7 @@ bool SignVerify::Ecdsa_sign_verify(EllPoint* Q, const char* m, mpz_t r, mpz_t s)
 		mpz_clear(w);
 		mpz_clear(u1);
 		mpz_clear(u2);
-		printf("��֤ʧ�ܣ�inf");
+		printf("inf error\n");
 		return false;
 	}
 	mpz_set(u1, p1.x);
@@ -149,14 +152,14 @@ bool SignVerify::Ecdsa_sign_verify(EllPoint* Q, const char* m, mpz_t r, mpz_t s)
 		mpz_clear(w);
 		mpz_clear(u1);
 		mpz_clear(u2);
-		//printf("ǩ����֤�ɹ�\n\n");
+		//printf("seccess\n\n");
 		return true;
 	}
 	mpz_clear(E);
 	mpz_clear(w);
 	mpz_clear(u1);
 	mpz_clear(u2);
-	printf("��֤ʧ�ܣ�uv");
+	printf("uv error\n");
 	return false;
 }
 
@@ -197,5 +200,3 @@ void HashToMpz(const char* m, mpz_t E)
 	str[k] = 0;
 	mpz_set_str(E, str, 2);
 }
-
-#endif

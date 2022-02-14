@@ -142,20 +142,68 @@ void mpz_printf(mpz_t op)
 	}
 	printf("\n");
 }
-void Fp_Mul(mpz_t rop, mpz_t op1, mpz_t op2, mpz_t p)
+void Fp_mod(mpz_t rop,mpz_t op,int modnum)
+{
+	if(modnum==ModP)
+	{
+		if(Cont.Fast_red)
+		{
+			Fast_mod256(rop,rop);
+		}	
+		else{
+			mpz_mod(rop, rop, P256Para.p);
+		}
+	}
+	else
+	{
+		if(Cont.Burr_red)
+		{
+			Barrett_modN(rop,rop);
+		}
+		else{
+			mpz_mod(rop,rop,P256Para.n);
+		}
+	}
+}
+inline void Fp_Mul(mpz_t rop, mpz_t op1, mpz_t op2)
 {
 	mpz_mul(rop, op1, op2);
-	mpz_mod(rop, rop, p);
+	if(Cont.Fast_red)
+	{
+		Fast_mod256(rop,rop);
+	}	
+	else
+	{
+		mpz_mod(rop, rop, P256Para.p);
+	}
 }
-void Fp_Add(mpz_t rop, mpz_t op1, mpz_t op2, mpz_t p)
+void Fp_MulN(mpz_t rop, mpz_t op1, mpz_t op2)
+{
+	mpz_mul(rop, op1, op2);
+	if(Cont.Burr_red)
+	{
+		Barrett_modN(rop,rop);
+	}
+	else{
+		mpz_mod(rop,rop,P256Para.n);
+	}
+}
+inline void Fp_Add(mpz_t rop, mpz_t op1, mpz_t op2)
 {
 	mpz_add(rop, op1, op2);
-	mpz_mod(rop, rop, p);
+	//Fp_mod(rop,rop,modnum);
+	if(mpz_cmp(rop,P256Para.p)>=0)
+	{
+		mpz_sub(rop,rop,P256Para.p);
+	}
 }
-void Fp_Sub(mpz_t rop, mpz_t op1, mpz_t op2, mpz_t p)
+inline void Fp_Sub(mpz_t rop, mpz_t op1, mpz_t op2)
 {
 	mpz_sub(rop, op1, op2);
-	mpz_mod(rop, rop, p);
+	if(mpz_cmp_si(rop,0)<0)
+	{
+		mpz_add(rop,rop,P256Para.p);
+	}
 }
 void Mpz2wNAF(mpz_t x, vector<long int>& wNaf, int w)
 {
@@ -246,14 +294,14 @@ EllPoint::EllPoint(mpz_t x, mpz_t y, mpz_t z)
 		mpz_init(this->y);
 		mpz_t mid;
 		mpz_init(mid);
-		Fp_Mul(mid, z, z, P256Para.p);
+		Fp_Mul(mid, z, z);
 		mpz_invert(mid, mid,P256Para.p);
-		Fp_Mul(this->x, x, mid, P256Para.p);
+		Fp_Mul(this->x, x, mid);
 
-		Fp_Mul(mid, z,  z, P256Para.p);
-		Fp_Mul(mid, mid, z, P256Para.p);
+		Fp_Mul(mid, z,  z);
+		Fp_Mul(mid, mid, z);
 		mpz_invert(mid, mid, P256Para.p);
-		Fp_Mul(this->y, y, mid, P256Para.p);
+		Fp_Mul(this->y, y, mid);
 		mpz_clear(mid);
 	}
 	
@@ -281,14 +329,14 @@ void EllPoint::Setp(mpz_t x, mpz_t y, mpz_t z)
 	mpz_set(jz, z);
 	mpz_t mid;
 	mpz_init(mid);
-	Fp_Mul(mid, z, z, P256Para.p);
+	Fp_Mul(mid, z, z);
 	mpz_invert(mid, mid, P256Para.p);
-	Fp_Mul(this->x, x, mid, P256Para.p);
+	Fp_Mul(this->x, x, mid);
 
-	Fp_Mul(mid, z, z, P256Para.p);
-	Fp_Mul(mid, mid, z, P256Para.p);
+	Fp_Mul(mid, z, z);
+	Fp_Mul(mid, mid, z);
 	mpz_invert(mid, mid, P256Para.p);
-	Fp_Mul(this->y, y, mid, P256Para.p);
+	Fp_Mul(this->y, y, mid);
 	mpz_clear(mid);
 }
 void EllPoint::Setp(EllPoint* op)
@@ -315,12 +363,12 @@ bool EllPoint::Is_in_ell()
 	mpz_init(y2);
 	mpz_init(x3);
 	mpz_init(ax);
-	Fp_Mul(y2, y, y,P256Para.p);
-	Fp_Mul(x3, x,  x, P256Para.p);
-	Fp_Mul(x3, x3,x, P256Para.p);
-	Fp_Mul(ax, P256Para.a, x, P256Para.p);
-	Fp_Add(x3, x3, ax, P256Para.p);
-	Fp_Add(x3, x3, P256Para.b, P256Para.p);
+	Fp_Mul(y2, y, y);
+	Fp_Mul(x3, x,  x);
+	Fp_Mul(x3, x3,x);
+	Fp_Mul(ax, P256Para.a, x);
+	Fp_Add(x3, x3, ax);
+	Fp_Add(x3, x3, P256Para.b);
 	if (mpz_cmp(y2, x3) == 0)
 	{
 		mpz_clear(y2);
@@ -335,10 +383,10 @@ bool EllPoint::Is_in_ell()
 }
 void EllPoint::print()
 {
-	gmp_printf("x:%Zd", x);
-	printf("\n");
-	gmp_printf("y:%Zd",y);
-	printf("\n");
+	printf("x:");
+	mpz_printf(x);
+	printf("y:");
+	mpz_printf(y);
 	printf("\n");
 }
 
@@ -359,17 +407,17 @@ void EllPoint::Pdouble(EllPoint* rop)
 	mpz_init(y3); 
 	mpz_init(z3);
 
-	Fp_Mul(t1, rop->jz, rop->jz,P256Para.p);
-	Fp_Sub(t2, rop->jx, t1, P256Para.p);
-	Fp_Add(t1, rop->jx, t1, P256Para.p);
-	Fp_Mul(t2, t2, t1, P256Para.p);
-	Fp_Add(t4, t2, t2, P256Para.p);
-	Fp_Add(t2, t2, t4, P256Para.p);
-	Fp_Add(y3, rop->jy, rop->jy, P256Para.p);
-	Fp_Mul(z3, y3, rop->jz, P256Para.p);
-	Fp_Mul(y3, y3, y3, P256Para.p);
-	Fp_Mul(t3, y3, rop->jx, P256Para.p);
-	Fp_Mul(y3, y3, y3, P256Para.p);
+	Fp_Mul(t1, rop->jz, rop->jz);
+	Fp_Sub(t2, rop->jx, t1);
+	Fp_Add(t1, rop->jx, t1);
+	Fp_Mul(t2, t2, t1);
+	Fp_Add(t4, t2, t2);
+	Fp_Add(t2, t2, t4);
+	Fp_Add(y3, rop->jy, rop->jy);
+	Fp_Mul(z3, y3, rop->jz);
+	Fp_Mul(y3, y3, y3);
+	Fp_Mul(t3, y3, rop->jx);
+	Fp_Mul(y3, y3, y3);
 	if (mpz_divisible_2exp_p(y3, 1) != 0)
 	{
 		mpz_divexact_ui(y3, y3, 2);
@@ -379,12 +427,12 @@ void EllPoint::Pdouble(EllPoint* rop)
 		mpz_add(y3, y3, P256Para.p);
 		mpz_divexact_ui(y3, y3, 2);
 	}
-	Fp_Mul(x3, t2, t2, P256Para.p);
-	Fp_Add(t1, t3, t3, P256Para.p);
-	Fp_Sub(x3, x3, t1, P256Para.p);
-	Fp_Sub(t1, t3, x3, P256Para.p);
-	Fp_Mul(t1, t1, t2, P256Para.p);
-	Fp_Sub(y3, t1, y3, P256Para.p);
+	Fp_Mul(x3, t2, t2);
+	Fp_Add(t1, t3, t3);
+	Fp_Sub(x3, x3, t1);
+	Fp_Sub(t1, t3, x3);
+	Fp_Mul(t1, t1, t2);
+	Fp_Sub(y3, t1, y3);
 
 	Setp(x3, y3, z3);
 	mpz_clear(t1);
@@ -417,12 +465,12 @@ void EllPoint::Add(EllPoint *p, EllPoint *q)
 	mpz_init(y3);
 	mpz_init(z3);
 
-	Fp_Mul(t1, p->jz, p->jz,P256Para.p);
-	Fp_Mul(t2, t1, p->jz,P256Para.p);
-	Fp_Mul(t1, t1, q->x, P256Para.p);
-	Fp_Mul(t2, t2, q->y, P256Para.p);
-	Fp_Sub(t1, t1, p->jx, P256Para.p);
-	Fp_Sub(t2, t2, p->jy, P256Para.p);
+	Fp_Mul(t1, p->jz, p->jz);
+	Fp_Mul(t2, t1, p->jz);
+	Fp_Mul(t1, t1, q->x);
+	Fp_Mul(t2, t2, q->y);
+	Fp_Sub(t1, t1, p->jx);
+	Fp_Sub(t2, t2, p->jy);
 	long int zero = 0;
 	if (mpz_cmp_si(t1, zero) == 0 )
 	{
@@ -455,18 +503,18 @@ void EllPoint::Add(EllPoint *p, EllPoint *q)
 			return;
 		}
 	}
-	Fp_Mul(z3, p->jz, t1, P256Para.p);
-	Fp_Mul(t3, t1, t1, P256Para.p);
-	Fp_Mul(t4, t3, t1, P256Para.p);
-	Fp_Mul(t3, t3, p->jx, P256Para.p);
-	Fp_Add(t1, t3, t3, P256Para.p);
-	Fp_Mul(x3, t2, t2, P256Para.p);
-	Fp_Sub(x3, x3, t1, P256Para.p);
-	Fp_Sub(x3,x3, t4, P256Para.p);
-	Fp_Sub(t3, t3, x3, P256Para.p);
-	Fp_Mul(t3, t3, t2, P256Para.p);
-	Fp_Mul(t4, t4, p->jy, P256Para.p);
-	Fp_Sub(y3, t3, t4, P256Para.p);
+	Fp_Mul(z3, p->jz, t1);
+	Fp_Mul(t3, t1, t1);
+	Fp_Mul(t4, t3, t1);
+	Fp_Mul(t3, t3, p->jx);
+	Fp_Add(t1, t3, t3);
+	Fp_Mul(x3, t2, t2);
+	Fp_Sub(x3, x3, t1);
+	Fp_Sub(x3,x3, t4);
+	Fp_Sub(t3, t3, x3);
+	Fp_Mul(t3, t3, t2);
+	Fp_Mul(t4, t4, p->jy);
+	Fp_Sub(y3, t3, t4);
 
 	Setp(x3,y3,z3);
 
@@ -487,7 +535,7 @@ void EllPoint::Sub(EllPoint* p, EllPoint* q)
 	//mpz_init(y);
 	//mpz_neg(y,y);
 	//mpz_mod(y,y,P256Para.p);
-	Fp_Sub(y, y, q->y, P256Para.p);
+	Fp_Sub(y, y, q->y);
 	mi.Setp(q->x, y);
 	Add(p, &mi);
 	mpz_clear(y);
@@ -549,13 +597,7 @@ void EllPoint::FixedMul(mpz_t k)
 }
 void EllPoint::Mul(mpz_t k, EllPoint* op)
 {
-
-	if (Cont.Fixed_base_ && mpz_cmp(op->x, P256Para.x) == 0 && mpz_cmp(op->y, P256Para.y) == 0)
-	{
-		FixedMul(k);
-		return;
-	}
-	else if(Cont.wNaf)
+	if(Cont.wNaf)
 	{
 		wNafMul(k,op);
 		return;
@@ -575,4 +617,13 @@ void EllPoint::Mul(mpz_t k, EllPoint* op)
 		}
 	}
 	Setp(&inf);
+}
+void EllPoint::MulP(mpz_t k,EllPoint* op)
+{
+	if (Cont.Fixed_base_)
+	{
+		FixedMul(k);
+		return;
+	}
+	Mul(k,op);
 }

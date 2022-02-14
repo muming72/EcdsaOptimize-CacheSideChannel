@@ -98,7 +98,7 @@ public:
 		mpz_clear(n);
 		mpz_clear(u);
 	}
-	mpz_t p;
+ 	mpz_t p;
 	mpz_t x;
 	mpz_t y;
 	mpz_t a;
@@ -126,8 +126,8 @@ public:
 		openssl_=0;
 		wNaf =1;
 		Fixed_base_=1;
-		Burr_red=1;
-		Fast_red=1;
+		Burr_red=0;
+		Fast_red=0;
 	}
 	~Control()
 	{
@@ -152,19 +152,26 @@ public:
 			{
 				if(strcmp((const char*)argv[i],"wNAF")==0)
 				{
+					printf("forbid wNAF\n");
 					wNaf=0;
 				}
 				else if(strcmp((const char*)argv[i],"FixedBase")==0)
 				{
+					printf("forbid FixedBase\n");
 					Fixed_base_=0;
 				}
 				else if(strcmp((const char*)argv[i],"BurrMod")==0)
 				{
-					Burr_red=0;
+					printf("use BurrMod\n");
+					Burr_red=1;
 				}
 				else if(strcmp((const char*)argv[i],"FastMod")==0)
 				{
-					Fast_red=0;
+					printf("use FastMod\n");
+					Fast_red=1;
+				}
+				else{
+					printf("para error\n");
 				}
 			}
 			break;
