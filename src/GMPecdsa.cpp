@@ -178,25 +178,5 @@ void HashToMpz(const char* m, mpz_t E)
 #elif Para_ == 521
 	SHA512((unsigned char*)m, strlen(m), buf);
 #endif // Para384_
-	char str[ParaSize_+1];
-	int k = 0;
-	for (int i = 0; i < (ParaSize_ / 8); i++)
-	{
-		unsigned char x = 1;
-		for (int j = 7; j >= 0; j--)
-		{
-			if (x & buf[i])
-			{
-				str[i*8+j] = '1';
-			}
-			else
-			{
-				str[i * 8 + j] = '0';
-			}
-			x = x << 1;
-			k++;
-		}
-	}
-	str[k] = 0;
-	mpz_set_str(E, str, 2);
+	mpz_import(E,ParaSize_/8,1,1,0,0,buf);
 }

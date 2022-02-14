@@ -102,7 +102,6 @@ void test_time()
 	printf("%f seconds\n", Total_time);
 }
 
-
 int main(int argc,char** argv)
 {
 	Cont.InitControl(argc,argv);test_time();
