@@ -1,5 +1,5 @@
 ﻿#include"GMPecdsa.h"
-
+#include"spy.h"
 
 #define  Message "information security"
 
@@ -101,13 +101,27 @@ void test_time()
 	double Total_time = (double)(finish - start) / CLOCKS_PER_SEC;
 	printf("%f seconds\n", Total_time);
 }
+void testspy()
+{
+	mpz_t a;
+	mpz_init_set_si(a,3);
 
+	SPY Spy;
+
+	EllPoint Point;
+	Point.Setp(P256Para.x,P256Para.y);
+
+	PMul p = &EllPoint::MulP;
+	printf("%d\n",Spy.flush_reload((void *)p));
+	Spy.flush((void *)p);
+	printf("%d\n",Spy.flush_reload((void *)p));
+}
 int main(int argc,char** argv)
 {
-	Cont.InitControl(argc,argv);test_time();
-	//get_std_curve_name();
-//	testmpz();
-
+	
+	Cont.InitControl(argc,argv);//test_time();
+	//testspy();
+	Spytest();
 }
 
 

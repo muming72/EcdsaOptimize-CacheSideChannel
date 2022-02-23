@@ -124,8 +124,8 @@ public:
 	{
 		gmp_ = 1;
 		openssl_=0;
-		wNaf =1;
-		Fixed_base_=1;
+		wNaf =0;
+		Fixed_base_=0;
 		Burr_red=0;
 		Fast_red=0;
 	}

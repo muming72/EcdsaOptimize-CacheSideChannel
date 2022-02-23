@@ -165,6 +165,7 @@ void Fp_mod(mpz_t rop,mpz_t op,int modnum)
 		}
 	}
 }
+
 inline void Fp_Mul(mpz_t rop, mpz_t op1, mpz_t op2)
 {
 	mpz_mul(rop, op1, op2);

@@ -67,6 +67,7 @@ void SignGen::key_pair_gen()
 		get_random(d);
 		Q.MulP(d, &P);
 	} while (!key_vali());
+	mpz_printf(d);
 }
 void SignGen::Ecdsa_sign_gen( const char* m)
 {
