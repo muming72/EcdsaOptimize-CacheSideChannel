@@ -10,6 +10,7 @@
 using namespace std;
 #define Para_ 256//192,224,256,384,521
 #define NAF_WIN_LEN 6//>=2
+#define MultiWin 2
 
 #if Para_ == 192
 #define ParaSize_ 160
@@ -115,6 +116,7 @@ class Control
 public:
 	bool gmp_;
 	bool openssl_;
+	bool spy_;
 	bool wNaf;
 	bool Fixed_base_;
 	bool Burr_red;
@@ -122,10 +124,11 @@ public:
 	int size;
 	Control()
 	{
+		spy_=0;
 		gmp_ = 1;
 		openssl_=0;
-		wNaf =0;
-		Fixed_base_=0;
+		wNaf =1;
+		Fixed_base_=1;
 		Burr_red=0;
 		Fast_red=0;
 	}
@@ -145,6 +148,12 @@ public:
 			{
 				gmp_=0;
 				openssl_=1;
+				break;
+			}
+			else if(strcmp((const char*)argv[1],"spy")==0)
+			{
+				gmp_ =0;
+				spy_ =1;
 				break;
 			}
 		default:

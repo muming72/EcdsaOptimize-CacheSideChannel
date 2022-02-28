@@ -1,5 +1,7 @@
 #include"GMPell.h"
-
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t  cond = PTHREAD_COND_INITIALIZER;
+bool alternate = 1;
 FpEllPara P256Para;
 FixedPoint FixPoint;
 Control Cont;	
@@ -627,4 +629,63 @@ void EllPoint::MulP(mpz_t k,EllPoint* op)
 		return;
 	}
 	Mul(k,op);
+}
+void EllPoint::MP_Mul(mpz_t k,mpz_t l,EllPoint *P,EllPoint* Q)
+{
+	EllPoint R[1<<MultiWin][1<<MultiWin];
+	EllPoint inf;
+	R[1][0].Setp(FixPoint.FixedP[0]);
+	R[2][0].Setp(FixPoint.FixedP[1]);
+	R[3][0].Add(&R[1][0],&R[2][0]);
+	R[0][1].Setp(Q);
+	for(int j=1;j<3;j++)
+	{
+		R[0][j+1].Add(&R[0][j],Q);
+	}
+	for(int j=1;j<4;j++)
+	{
+		for(int i=1;i<4;i++)
+		{
+			R[i][j].Add(&R[i-1][j],P);
+		}	
+	}
+	int i = mpz_sizeinbase(k, 2)-1;
+	int j = mpz_sizeinbase(l, 2) -1;
+	i = i>j?i:j;
+	i+=(i+1)%2;
+	int m,n;
+
+	for (; i >= 0; i-=2)
+	{
+		inf.Pdouble(&inf);
+		inf.Pdouble(&inf);
+		m = (mpz_tstbit(k,i)<<1) + mpz_tstbit(k,i-1);
+		n= (mpz_tstbit(l,i)<<1) + mpz_tstbit(l,i-1);
+		inf.Add(&R[m][n],&inf);
+	}
+	Setp(&inf);
+}
+
+
+void EllPoint::SpyMul(mpz_t k, EllPoint* op)
+{
+	EllPoint inf;
+	for (int i = mpz_sizeinbase(k, 2) - 1; i >= 0; i--)
+	{
+		pthread_mutex_lock(&mutex);
+		while(!alternate)
+		{
+			pthread_cond_wait(&cond,&mutex);
+		}
+		
+		inf.Pdouble(&inf);
+		if (mpz_tstbit(k, i))
+		{
+			inf.Add(&inf, op);
+		}
+		alternate =0;
+		pthread_mutex_unlock(&mutex);
+		pthread_cond_signal(&cond);//printf("msignth %d\n  ",i);
+	}
+	Setp(&inf);
 }

