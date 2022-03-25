@@ -6,6 +6,7 @@ using namespace std;
 extern pthread_mutex_t mutex;// = PTHREAD_MUTEX_INITIALIZER;
 extern pthread_cond_t  cond;// = PTHREAD_COND_INITIALIZER;
 extern bool alternate;// = 1;
+extern int access_test;
 
 void mpz_printf(mpz_t op);
 void Fast_mod256(mpz_t rop, mpz_t op);
@@ -68,5 +69,6 @@ public:
 	}
 };
 extern FixedPoint FixPoint;
+extern int Stop_spy;
 
 

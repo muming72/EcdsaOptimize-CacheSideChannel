@@ -109,18 +109,44 @@ void testspy()
 {
 	mpz_t a;
 	mpz_init_set_si(a,3);
-
+	flush_reload_threshold = get_FlushReload_time();
 	EllPoint Point;
 	Point.Setp(P256Para.x,P256Para.y);
-
-	void* p = (void*)&EllPoint::MulP;
+	void* p = (void*)&EllPoint::Add;
+	flush((void *)p);
+	/*
+	Point.Add(&Point,&Point);
 	printf("%d\n",flush_reload((void *)p));
 	flush((void *)p);
-	printf("%d\n",flush_reload((void *)p));
+	printf("%d\n",flush_reload((void *)p));*/
+	char c[20];
+	while(1)
+	{
+		scanf("%s",c);
+		if(strcmp((const char*)c,"mul")==0)
+		{
+			Point.Add(&Point,&Point);
+		}
+		else if(strcmp((const char*)c,"access")==0)
+		{
+			maceess((void *)p);
+		}
+		else if(strcmp((const char*)c,"reload")==0)
+		{
+			printf("%d\n",flush_reload((void *)p));
+		}
+		else if(strcmp((const char*)c,"exit")==0)
+		{
+			break;
+		}
+		else{
+			printf("input error\n");
+		}
+	}
 }
 int main(int argc,char** argv)
 {
-	
+	//testspy();
 	Cont.InitControl(argc,argv);test_time();
 }
 

@@ -5,7 +5,7 @@
 //typedef void (EllPoint::*PMul)(mpz_t k,EllPoint* op);
 //typedef void (EllPoint::*PAdd)(EllPoint* p, EllPoint* q);
 //typedef void (EllPoint::*PDoub)(EllPoint* rop);
-static int Stop_spy=0;
+//static int Stop_spy=0;
 static char key[512];
 static unsigned long long int flush_reload_threshold = 250;
 
