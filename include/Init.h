@@ -114,19 +114,19 @@ extern FpEllPara P256Para;
 class Control
 {
 public:
-	bool gmp_;
-	bool openssl_;
+	//bool gmp_;
+	//bool openssl_;
 	bool spy_;
 	bool wNaf;
 	bool Fixed_base_;
 	bool Burr_red;
 	bool Fast_red;
-	int size;
+	//int size;
 	Control()
 	{
 		spy_=0;
-		gmp_ = 1;
-		openssl_=0;
+		//gmp_ = 1;
+		//openssl_=0;
 		wNaf =1;
 		Fixed_base_=1;
 		Burr_red=0;
@@ -135,56 +135,6 @@ public:
 	~Control()
 	{
 
-	}
-	void InitControl(int argc,char** argv)
-	{
-		switch (argc)
-		{
-		case 1:
-			break;
-		case 2:
-			if(strcmp((const char*)argv[1],"GMP")==0||strcmp((const char*)argv[1],"gmp")==0){break;}
-			else if(strcmp((const char*)argv[1],"OPENSSL")==0||strcmp((const char*)argv[1],"openssl")==0)
-			{
-				gmp_=0;
-				openssl_=1;
-				break;
-			}
-			else if(strcmp((const char*)argv[1],"spy")==0)
-			{
-				gmp_ =0;
-				spy_ =1;
-				break;
-			}
-		default:
-			for(int i=1;i<argc;i++)
-			{
-				if(strcmp((const char*)argv[i],"wNAF")==0)
-				{
-					printf("forbid wNAF\n");
-					wNaf=0;
-				}
-				else if(strcmp((const char*)argv[i],"FixedBase")==0)
-				{
-					printf("forbid FixedBase\n");
-					Fixed_base_=0;
-				}
-				else if(strcmp((const char*)argv[i],"BurrMod")==0)
-				{
-					printf("use BurrMod\n");
-					Burr_red=1;
-				}
-				else if(strcmp((const char*)argv[i],"FastMod")==0)
-				{
-					printf("use FastMod\n");
-					Fast_red=1;
-				}
-				else{
-					printf("para error\n");
-				}
-			}
-			break;
-		}
 	}
 };
 extern Control Cont;	
