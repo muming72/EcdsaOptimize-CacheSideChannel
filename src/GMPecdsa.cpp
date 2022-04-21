@@ -79,15 +79,7 @@ void SignGen::Ecdsa_sign_gen( const char* m)
 	EllPoint q;
 	do{	
 		get_random(k);
-		if(Cont.spy_)
-		{
-			mpz_printf(k);
-			q.SpyMul(k,&P);
-		}
-		else
-		{
-			q.MulP(k, &P);
-		}
+		q.MulP(k, &P);
 		mpz_set(r, q.x);
 		mpz_mod(r, r, P256Para.n);
 	} while (mpz_cmp_si(r,0)==0);

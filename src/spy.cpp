@@ -1,8 +1,8 @@
 #include"spy.h"
-void* addr_Pmul = (void*)&EllPoint::SpyMul;
+static char key[512];
+
 void* addr_Padd = (void*)&EllPoint::Add;
-void* addr_Pdoub = (void*)&EllPoint::Pdouble;
-extern int Stop_spy =0;
+#define  Message "information security"
 
 inline void maceess(void* addr)
 {
@@ -31,7 +31,7 @@ unsigned long long int get_FlushReload_time()
 	reload_time=0;
 	flush_time=0;
 	int a[16];
-	void* addr=(void*)&access_test;
+	void* addr=addr_Padd;
 	unsigned long long int count =10000;
 	maceess(addr);
 	for(int i=0;i<count;i++)
@@ -64,7 +64,7 @@ bool __attribute((always_inline)) flush_reload(void* addr)
 	end = rdtsc();
 	asm volatile("mfence");
     flush(addr);
-        //printf("%llu\n",end-start);
+        printf("%llu\n",end-start);
     if((end-start)<flush_reload_threshold)
     {
         return 1;
@@ -72,64 +72,79 @@ bool __attribute((always_inline)) flush_reload(void* addr)
     return 0;
 }
 
-
-void* spyth(void* arg)
+void unsafe_sign::Ecdsa_sign_gen(const char* m)
 {
-		int i = 0;
-		void* addr = (void*)&access_test;
-		while(!Stop_spy)
+	mpz_t k, E, dr, k_;
+	mpz_init(k);
+	mpz_init(E);
+	mpz_init(dr);
+	mpz_init(k_);
+	unsafe_ellpoint q;
+	do{	
+		get_random(k);
+	
+		mpz_printf(k);
+		q.unsafe_MulP(k,&P);
+		
+		mpz_set(r, q.x);
+		mpz_mod(r, r, P256Para.n);
+	} while (mpz_cmp_si(r,0)==0);
+
+
+	HashToMpz(m, E);
+	mpz_invert(k_, k, P256Para.n);
+	Fp_MulN(dr, d, r);
+	mpz_add(E,E,dr);
+	if(mpz_cmp(E,P256Para.n)>=0)
+	{
+		mpz_sub(E,E,P256Para.n);
+	}
+	Fp_MulN(s, k_, E);
+
+	mpz_clear(k);
+	mpz_clear(k_);
+	mpz_clear(dr);
+	mpz_clear(E);
+}
+void unsafe_ellpoint::unsafe_MulP(mpz_t k,EllPoint* op)
+{
+	EllPoint inf;
+	int size = mpz_sizeinbase(k, 2);
+	printf("%d",size);
+	for (int i = size - 1; i >= 0; i--)
+	{
+		inf.Pdouble(&inf);
+		if (mpz_tstbit(k, i))
 		{
-			pthread_mutex_lock(&mutex);
-			while(alternate)
+			flush((void*)addr_Padd);
+			inf.Add(&inf, op);
+			if(flush_reload(addr_Padd))
 			{
-				pthread_cond_wait(&cond,&mutex);
-			}
-			if(flush_reload(addr))
-			{
-				//printf("1 ");
-				key[i]='1';
+				printf("1 ");
+				key[size -1-i]='1';
 			}
 			else
 			{
-				//printf("0 ");
-				key[i]='0';
+				printf("0 ");
+				key[size -1-i]='0';
 			}
-			i++;
-			flush(addr);
-			if(i>500){break;}
-			alternate =1;
-			//printf("spyth %d\n  ",i);
-			pthread_mutex_unlock(&mutex);
-			pthread_cond_signal(&cond);
+			flush((void*)addr_Padd);
 		}
-		
-		key[i]=0;
-		return 0;
-//	}
+	}
+	key[size] = 0;
+	Setp(&inf);
 }
-SignGen sign;
-void* signth(void* arg)
-{
-	sign.Ecdsa_sign_gen("insada");
-	//Stop_spy =1;
-	return 0;
-}
+
 
 void Spytest()
 {
-	pthread_t spy_thread; 
-	pthread_t sign_thread;
 	flush_reload_threshold = get_FlushReload_time();
-	
-	pthread_create(&spy_thread,NULL,spyth, NULL);
-	pthread_create(&sign_thread,NULL,signth, NULL);
-	pthread_join(sign_thread,NULL);
-	pthread_join(spy_thread,NULL);
+	unsafe_sign Sign;
+	Sign.Ecdsa_sign_gen(Message);
+
 	printf("\n%s\n",key);
 	mpz_t mpz_key;
 	mpz_init_set_str(mpz_key,key,2);
 	mpz_printf(mpz_key);
-	flush(addr_Pdoub);
-	flush(addr_Padd);
 }
 

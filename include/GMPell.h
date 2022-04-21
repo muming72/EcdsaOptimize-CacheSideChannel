@@ -3,10 +3,6 @@
 using namespace std;
 #define ModN 1
 #define ModP 0
-extern pthread_mutex_t mutex;// = PTHREAD_MUTEX_INITIALIZER;
-extern pthread_cond_t  cond;// = PTHREAD_COND_INITIALIZER;
-extern bool alternate;// = 1;
-extern int access_test;
 
 void mpz_printf(mpz_t op);
 void Fast_mod256(mpz_t rop, mpz_t op);
@@ -45,7 +41,6 @@ public:
 	void Mul(mpz_t k, EllPoint* op);
 	void MulP(mpz_t k, EllPoint* op);
 	void MP_Mul(mpz_t k,mpz_t l,EllPoint *P,EllPoint* Q);
-	void SpyMul(mpz_t k, EllPoint* op);
 };
 class FixedPoint
 {

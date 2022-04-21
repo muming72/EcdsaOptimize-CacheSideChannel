@@ -31,7 +31,7 @@ void testspy()
 	flush_reload_threshold = get_FlushReload_time();
 	EllPoint Point;
 	Point.Setp(P256Para.x,P256Para.y);
-	void* p = (void*)&EllPoint::Add;
+	void* p = (void*)a;//&EllPoint::Add;
 	flush((void *)p);
 	/*
 	Point.Add(&Point,&Point);
@@ -53,10 +53,15 @@ void testspy()
 		else if(strcmp((const char*)c,"reload")==0)
 		{
 			printf("%d\n",flush_reload((void *)p));
+			flush(p);
 		}
 		else if(strcmp((const char*)c,"exit")==0)
 		{
 			break;
+		}
+		else if(strcmp((const char*)c,"testtime")==0)
+		{
+			flush_reload_threshold = get_FlushReload_time();
 		}
 		else{
 			printf("input error\n");
@@ -100,6 +105,8 @@ void test_security_encrypt()
 }
 void test_spy()
 {
+	//testspy();
+	Spytest();
 	printf("spy\n");
 }
 void test_my_encrypt()

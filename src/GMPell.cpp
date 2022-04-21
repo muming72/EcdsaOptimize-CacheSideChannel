@@ -1,9 +1,5 @@
 #include"GMPell.h"
-#include"spy.h"
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t  cond = PTHREAD_COND_INITIALIZER;
-bool alternate = 1;
-int access_test =1;
+
 FpEllPara P256Para;
 FixedPoint FixPoint;
 Control Cont;	
@@ -668,30 +664,3 @@ void EllPoint::MP_Mul(mpz_t k,mpz_t l,EllPoint *P,EllPoint* Q)
 	Setp(&inf);
 }
 
-
-void EllPoint::SpyMul(mpz_t k, EllPoint* op)
-{
-	EllPoint inf;
-	for (int i = mpz_sizeinbase(k, 2) - 1; i >= 0; i--)
-	{
-		pthread_mutex_lock(&mutex);
-		while(!alternate)
-		{
-			pthread_cond_wait(&cond,&mutex);
-		}
-		
-		inf.Pdouble(&inf);
-		if (mpz_tstbit(k, i))
-		{
-			maceess((void*)&access_test);
-			//flush((void*)&access_test);
-			inf.Add(&inf, op);
-		}
-		alternate =0;
-		pthread_mutex_unlock(&mutex);
-		pthread_cond_signal(&cond);
-		//printf("msignth %d\n  ",i);
-	}
-	Stop_spy =1 ;
-	Setp(&inf);
-}

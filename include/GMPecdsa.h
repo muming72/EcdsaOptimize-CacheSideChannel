@@ -5,7 +5,7 @@ static unsigned long int rand_seed = 114;
 void HashToMpz(const char* m, mpz_t E);
 class SignGen
 {
-private:	
+protected:	
 	void get_random(mpz_t random);
 public:
 	EllPoint P;
@@ -17,7 +17,7 @@ public:
 	SignGen(const char* m);
 	~SignGen();
 	void key_pair_gen();
-	void Ecdsa_sign_gen(const char* m);
+	virtual void Ecdsa_sign_gen(const char* m);
 	bool key_vali();
 	void print();
 };
