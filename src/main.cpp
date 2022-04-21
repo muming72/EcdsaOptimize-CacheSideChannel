@@ -89,11 +89,11 @@ void test_openssl()
 			//EC_KEY_generate_key(key1);
 			SHA256((unsigned char*)m, strlen(m), buf);
 			s = ECDSA_do_sign(buf, 32, key1);
-			if (ECDSA_do_verify(buf, 32, s, key1))
-			{
+			//if (ECDSA_do_verify(buf, 32, s, key1))
+			//{
 				//printf("%d\n", EC_GROUP_get_curve_name(group1));
 				//EC_KEY_print(a, key1, 13);
-			}
+			//}
 		}
 		finish = clock();
 		double Total_time = (double)(finish - start) / CLOCKS_PER_SEC;
@@ -120,10 +120,7 @@ void test_my_encrypt()
 		//sign->key_pair_gen();
 		sign.Ecdsa_sign_gen(Message);
 		//sign->print();
-		if (SignVerify::Ecdsa_sign_verify(&(sign.Q), Message, sign.r, sign.s))
-		{
-			//printf("验证成功\n");
-		}
+		SignVerify::Ecdsa_sign_verify(&(sign.Q), Message, sign.r, sign.s);
 	}	
 	finish = clock();
 	double Total_time = (double)(finish - start) / CLOCKS_PER_SEC;
@@ -145,6 +142,8 @@ void test1(int argc,char** argv)
 	a.add("fixed",'f',"Fixed-base");
 	a.add("Bar",'b',"Barrett reduction");
 	a.add("Fast",'F',"Fast reduction");
+	a.add("MultiPoint",'m',"Multiple Point Multiplication");
+
 	a.parse_check(argc,argv);
 	number = a.get<int>("number");
 	if(a.exist("openssl"))
@@ -162,6 +161,7 @@ void test1(int argc,char** argv)
 		Cont.Fixed_base_ = a.exist("fixed");
 		Cont.Burr_red = a.exist("Bar");
 		Cont.Fast_red = a.exist("Fast");
+		Cont.Muti = a.exist("MultiPoint");
 		test_my_encrypt();
 	}
 }

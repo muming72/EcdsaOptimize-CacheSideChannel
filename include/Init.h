@@ -121,6 +121,7 @@ public:
 	bool Fixed_base_;
 	bool Burr_red;
 	bool Fast_red;
+	bool Muti;
 	//int size;
 	Control()
 	{
@@ -131,6 +132,7 @@ public:
 		Fixed_base_=1;
 		Burr_red=0;
 		Fast_red=0;
+		Muti = 1;
 	}
 	~Control()
 	{

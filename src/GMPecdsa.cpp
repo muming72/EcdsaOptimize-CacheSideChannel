@@ -131,8 +131,13 @@ bool SignVerify::Ecdsa_sign_verify(EllPoint* Q, const char* m, mpz_t r, mpz_t s)
 
 	Fp_MulN(u1, E, w);
 	Fp_MulN(u2, r, w);
-//	p1.MulP(u1, &P);q1.Mul(u2, Q);p1.Add(&p1, &q1);	
-	p1.MP_Mul(u1,u2,&P,Q);
+	if(Cont.Muti){	
+		p1.MP_Mul(u1,u2,&P,Q);
+	}
+	else{
+		p1.MulP(u1, &P);q1.Mul(u2, Q);p1.Add(&p1, &q1);	
+	}
+	
 	if (p1.Is_inf())
 	{
 		mpz_clear(E);
