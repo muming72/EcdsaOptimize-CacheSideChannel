@@ -105,8 +105,13 @@ void SignGen::print()
 {
 	printf("Public key Q:\n");
 	Q.print();
-	gmp_printf("Private key d:\n%Zd\n\n", d);
-	gmp_printf("Signature:\nr:%Zd\ns:%Zd\n", r,s);
+	printf("Private key d:\n");
+	mpz_printf(d);
+	gmp_printf("Signature:\n");
+	printf("r:");
+	mpz_printf(r);
+	printf("s:");
+	mpz_printf(s);
 }
 
 bool SignVerify::Ecdsa_sign_verify(EllPoint* Q, const char* m, mpz_t r, mpz_t s)

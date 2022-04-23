@@ -1,7 +1,10 @@
 ﻿#include"GMPecdsa.h"
 #include"spy.h"
 #include"cmdline.h"
-#define  Message "information security"
+#define  message "information security"
+#pragma GCC diagnostic ignored "-Wpmf-conversions"
+#pragma GCC diagnostic ignored "-Wattributes"
+char Message[1024];// = message;
 int number;
 void get_std_curve_name()
 {
@@ -24,53 +27,51 @@ void get_std_curve_name()
 
 	free(curves);
 }
-void testspy()
+void help_info()
 {
-	mpz_t a;
-	mpz_init_set_si(a,3);
-	flush_reload_threshold = get_FlushReload_time();
-	EllPoint Point;
-	Point.Setp(P256Para.x,P256Para.y);
-	void* p = (void*)a;//&EllPoint::Add;
-	flush((void *)p);
-	/*
-	Point.Add(&Point,&Point);
-	printf("%d\n",flush_reload((void *)p));
-	flush((void *)p);
-	printf("%d\n",flush_reload((void *)p));*/
-	char c[20];
-	while(1)
-	{
-		scanf("%s",c);
-		if(strcmp((const char*)c,"mul")==0)
+	printf("\nhelp   print help info\n");
+	printf("sign   generate the signature\n");
+	printf("verify  verify the signature\n");
+	printf("key    generate the key\n");
+	printf("exit    exit\n");
+}
+void interact()
+{
+	char str[500];
+	help_info();
+	SignGen sign;
+	while(true){
+		scanf("%s",str);
+		if(strcmp(str,"help")==0)
 		{
-			Point.Add(&Point,&Point);
+			help_info();
 		}
-		else if(strcmp((const char*)c,"access")==0)
+		else if(strcmp(str,"sign")==0)
 		{
-			maceess((void *)p);
+			sign.Ecdsa_sign_gen(Message);
+			sign.print();
+			printf("\n");
 		}
-		else if(strcmp((const char*)c,"reload")==0)
-		{
-			printf("%d\n",flush_reload((void *)p));
-			flush(p);
+		else if(strcmp(str,"verify")==0){
+			if(SignVerify::Ecdsa_sign_verify(&(sign.Q), Message, sign.r, sign.s)){
+				printf("verify success\n\n");
+			}
 		}
-		else if(strcmp((const char*)c,"exit")==0)
+		else if(strcmp(str,"key")==0){
+			sign.key_pair_gen();
+			printf("Private key:");
+			mpz_printf(sign.d);
+			printf("Public key:\n");
+			sign.Q.print();
+		}
+		else if(strcmp(str,"exit")==0)
 		{
+			printf("app exit\n");
 			break;
-		}
-		else if(strcmp((const char*)c,"testtime")==0)
-		{
-			flush_reload_threshold = get_FlushReload_time();
-		}
-		else{
-			printf("input error\n");
 		}
 	}
 }
-
-
-void test_openssl()
+void test_openssl(bool ver)
 {
 		clock_t start, finish;
 		start = clock();
@@ -89,19 +90,30 @@ void test_openssl()
 			//EC_KEY_generate_key(key1);
 			SHA256((unsigned char*)m, strlen(m), buf);
 			s = ECDSA_do_sign(buf, 32, key1);
-			//if (ECDSA_do_verify(buf, 32, s, key1))
-			//{
-				//printf("%d\n", EC_GROUP_get_curve_name(group1));
-				//EC_KEY_print(a, key1, 13);
-			//}
+			if (ver){
+				ECDSA_do_verify(buf, 32, s, key1);
+			}
 		}
 		finish = clock();
 		double Total_time = (double)(finish - start) / CLOCKS_PER_SEC;
 		printf("%f seconds\n", Total_time);
 }
-void test_security_encrypt()
+void test_security_encrypt(bool ver)
 {
-	printf("security\n");
+	clock_t start, finish;
+	start = clock();
+
+	Safe_sign sign;
+	for (int i = 0; i < number; i++)
+	{
+		sign.Ecdsa_sign_gen(Message);
+		if(ver){
+			SignVerify::Ecdsa_sign_verify(&(sign.Q), Message, sign.r, sign.s);
+		}
+	}	
+	finish = clock();
+	double Total_time = (double)(finish - start) / CLOCKS_PER_SEC;
+	printf("%f seconds\n", Total_time);
 }
 void test_spy()
 {
@@ -109,18 +121,19 @@ void test_spy()
 	Spytest();
 	printf("spy\n");
 }
-void test_my_encrypt()
+void test_my_encrypt(bool ver)
 {
 	clock_t start, finish;
 	start = clock();
-
 	SignGen sign;
 	for (int i = 0; i < number; i++)
 	{
-		//sign->key_pair_gen();
 		sign.Ecdsa_sign_gen(Message);
-		//sign->print();
-		SignVerify::Ecdsa_sign_verify(&(sign.Q), Message, sign.r, sign.s);
+		if(ver)
+		{
+			SignVerify::Ecdsa_sign_verify(&(sign.Q), Message, sign.r, sign.s);
+		}
+		
 	}	
 	finish = clock();
 	double Total_time = (double)(finish - start) / CLOCKS_PER_SEC;
@@ -131,38 +144,47 @@ void test1(int argc,char** argv)
 {
 	cmdline::parser a;
 	a.add<int>("number",'n',"number of executions",false,500);
+	a.add<string>("Message",'\0',"The Signed Message",false,"information security");
 	
 	a.add("openssl",'o',"use openssl");
 
 	a.add("spy",'\0',"cache side channel");
 
-	a.add("security",'s',"met");
+	a.add("security",'s',"Montgomery Ladder");
 
 	a.add("wNAF",'w',"window NAF");
 	a.add("fixed",'f',"Fixed-base");
 	a.add("Bar",'b',"Barrett reduction");
 	a.add("Fast",'F',"Fast reduction");
 	a.add("MultiPoint",'m',"Multiple Point Multiplication");
-
+	a.add("interact",'i',"interact with app");
+	a.add("verify",'v',"with verification");
 	a.parse_check(argc,argv);
 	number = a.get<int>("number");
+	strcpy(Message,a.get<string>("Message").c_str());
+
+	
+	Cont.wNaf = a.exist("wNAF");
+	Cont.Fixed_base_ = a.exist("fixed");
+	Cont.Burr_red = a.exist("Bar");
+	Cont.Fast_red = a.exist("Fast");
+	Cont.Muti = a.exist("MultiPoint");
+
 	if(a.exist("openssl"))
 	{
-		test_openssl();
+		test_openssl(a.exist("verify"));
 	}
 	else if(a.exist("spy")){
 		test_spy();
 	}
-	else if(a.exist("security")){
-		test_security_encrypt();
+	else if(a.exist("security")){	
+		test_security_encrypt(a.exist("verify"));
+	}
+	else if(a.exist("interact")){
+		interact();
 	}
 	else{
-		Cont.wNaf = a.exist("wNAF");
-		Cont.Fixed_base_ = a.exist("fixed");
-		Cont.Burr_red = a.exist("Bar");
-		Cont.Fast_red = a.exist("Fast");
-		Cont.Muti = a.exist("MultiPoint");
-		test_my_encrypt();
+		test_my_encrypt(a.exist("verify"));
 	}
 }
 int main(int argc,char** argv)

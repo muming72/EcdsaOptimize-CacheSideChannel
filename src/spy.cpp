@@ -80,9 +80,6 @@ void unsafe_sign::Ecdsa_sign_gen(const char* m)
 	unsafe_ellpoint q;
 	do{	
 		get_random(k);
-		//mpz_set_str(k,"ffff ffff ffff ffff ffff ffff ffff ffff 0000 0000 0000 0000 0000 0000 0000 0000",16);
-		 // mpz_set_str(k,"ffff 0000 0000 0000 ffff 0000 ffff 0000 ffff 0000 ffff 0000 ffff 0000 ffff eeee",16);
-		//mpz_printf(k);
 		q.unsafe_MulP(k,&P);
 		
 		mpz_set(r, q.x);
@@ -120,7 +117,7 @@ void unsafe_ellpoint::unsafe_MulP(mpz_t k,EllPoint* op)
 		if (mpz_tstbit(k, i))
 		{
 			inf.Add(&inf, op);
-			maceess(addr);
+			//maceess(addr);
 			flush((void*)addr);
 		}
 		start = rdtsc();
@@ -145,7 +142,60 @@ void unsafe_ellpoint::unsafe_MulP(mpz_t k,EllPoint* op)
 	Setp(&inf);
 }
 
+void Safe_sign::Ecdsa_sign_gen(const char* m)
+{
+	mpz_t k, E, dr, k_;
+	mpz_init(k);
+	mpz_init(E);
+	mpz_init(dr);
+	mpz_init(k_);
+	Safe_ellpoint q;
+	do{	
+		get_random(k);
+		q.safe_MulP(k,&P);
+		
+		mpz_set(r, q.x);
+		mpz_mod(r, r, P256Para.n);
+	} while (mpz_cmp_si(r,0)==0);
 
+
+	HashToMpz(m, E);
+	mpz_invert(k_, k, P256Para.n);
+	Fp_MulN(dr, d, r);
+	mpz_add(E,E,dr);
+	if(mpz_cmp(E,P256Para.n)>=0)
+	{
+		mpz_sub(E,E,P256Para.n);
+	}
+	Fp_MulN(s, k_, E);
+
+	mpz_clear(k);
+	mpz_clear(k_);
+	mpz_clear(dr);
+	mpz_clear(E);
+}
+void Safe_ellpoint::safe_MulP(mpz_t k,EllPoint* op){
+	if (op->Is_inf())
+	{
+		Setp(op);
+		return;
+	}
+	EllPoint op1;
+	EllPoint op2(op->x,op->y);
+	for (int i = mpz_sizeinbase(k, 2) - 1; i >= 0; i--)
+	{
+		if (mpz_tstbit(k, i))
+		{
+			op1.Add(&op1,&op2);
+			op2.Pdouble(&op2);
+		}
+		else{
+			op2.Add(&op1,&op2);
+			op1.Pdouble(&op1);
+		}
+	}
+	Setp(&op1);
+}
 void Spytest()
 {
 	flush_reload_threshold = get_FlushReload_time();

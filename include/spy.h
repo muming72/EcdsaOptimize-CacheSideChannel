@@ -23,3 +23,12 @@ class unsafe_ellpoint: public EllPoint{
 public:
     void unsafe_MulP(mpz_t k,EllPoint* op);
 };
+
+class Safe_sign: public SignGen{
+public:
+    void Ecdsa_sign_gen(const char* m);
+};
+class Safe_ellpoint: public EllPoint{
+public:
+    void safe_MulP(mpz_t k,EllPoint* op);
+};
