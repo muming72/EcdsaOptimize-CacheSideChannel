@@ -244,7 +244,29 @@ void Mpz2wNAF(mpz_t x, vector<long int>& wNaf, int w)
 	}
 	mpz_clear(k);
 }
+void Pointaddxy(EllPoint* p){
+	if(p->Is_inf())
+	{
+		mpz_set_si(p->x,0);
+		mpz_set_si(p->y,0);
+	}
+	else{
+		mpz_t mid;
+		mpz_init(mid);
+		mpz_t z_1;
+		mpz_init(z_1);
+		mpz_invert(z_1, p->jz,P256Para.p);
+		Fp_Mul(mid,z_1,z_1);
+		Fp_Mul(p->x, p->jx, mid);
 
+		Fp_Mul(mid, mid,z_1);
+		Fp_Mul(p->y,p->jy, mid);
+		
+		mpz_clear(mid);
+		mpz_clear(z_1);
+	}
+	p->Is_xy = 1;
+}
 EllPoint::EllPoint()
 {
 	mpz_init_set_si(x,0);
@@ -252,6 +274,7 @@ EllPoint::EllPoint()
 	mpz_init_set_si(jx,0);
 	mpz_init_set_si(jy,1);
 	mpz_init_set_si(jz, 0);
+	Is_xy =1;
 }
 EllPoint::EllPoint(mpz_t x, mpz_t y)
 {
@@ -270,9 +293,9 @@ EllPoint::EllPoint(mpz_t x, mpz_t y)
 		mpz_init_set(this->y, y);
 		mpz_init_set(jx, x);
 		mpz_init_set(jy, y);
-		mpz_init_set_str(jz, "1", 16);
+		mpz_init_set_si(jz, 1);
 	}
-	
+	Is_xy = 1;
 }
 EllPoint::EllPoint(mpz_t x, mpz_t y, mpz_t z)
 {
@@ -285,25 +308,16 @@ EllPoint::EllPoint(mpz_t x, mpz_t y, mpz_t z)
 		mpz_init_set_si(jx, 0);
 		mpz_init_set_si(jy, 1);
 		mpz_init_set_si(jz, 0);
+		Is_xy=1;
 	}
 	else
 	{
 		mpz_init_set(jx, x);
 		mpz_init_set(jy, y);
 		mpz_init_set(jz, z);
-		mpz_init(this->x);
-		mpz_init(this->y);
-		mpz_t mid;
-		mpz_init(mid);
-		Fp_Mul(mid, z, z);
-		mpz_invert(mid, mid,P256Para.p);
-		Fp_Mul(this->x, x, mid);
-
-		Fp_Mul(mid, z,  z);
-		Fp_Mul(mid, mid, z);
-		mpz_invert(mid, mid, P256Para.p);
-		Fp_Mul(this->y, y, mid);
-		mpz_clear(mid);
+		mpz_init(x);
+		mpz_init(y);
+		Is_xy = 0;
 	}
 	
 }
@@ -317,38 +331,44 @@ EllPoint::~EllPoint()
 }
 void EllPoint::Setp(mpz_t x, mpz_t y)
 {
-	mpz_set(this->x, x);
-	mpz_set(this->y, y);
-	mpz_set(jx, x);
-	mpz_set(jy, y);
-	mpz_set_str(jz, "1", 16);
+	if(mpz_cmp_si(x, 0) == 0 && mpz_cmp_si(y, 0)==0){
+		mpz_set_si(this->x, 0);
+		mpz_set_si(this->y, 0);
+		mpz_set_si(jx, 0);
+		mpz_set_si(jy, 1);
+		mpz_set_si(jz, 0);
+	}
+	else{
+		mpz_set(this->x, x);
+		mpz_set(this->y, y);
+		mpz_set(jx, x);
+		mpz_set(jy, y);
+		mpz_set_si(jz, 1);
+	}
+	Is_xy =1;
  }
 void EllPoint::Setp(mpz_t x, mpz_t y, mpz_t z)
 {
 	mpz_set(jx, x);
 	mpz_set(jy, y);
 	mpz_set(jz, z);
-	mpz_t mid;
-	mpz_init(mid);
-	Fp_Mul(mid, z, z);
-	mpz_invert(mid, mid, P256Para.p);
-	Fp_Mul(this->x, x, mid);
-
-	Fp_Mul(mid, z, z);
-	Fp_Mul(mid, mid, z);
-	mpz_invert(mid, mid, P256Para.p);
-	Fp_Mul(this->y, y, mid);
-	mpz_clear(mid);
+	Is_xy =0;
 }
 void EllPoint::Setp(EllPoint* op)
 {
-	Setp(op->x, op->y);
-
+	if(op->Is_xy==1)
+	{
+		Setp(op->x, op->y);
+	}
+	else{
+		Setp(op->jx, op->jy,op->jz);
+	}
+	
 }
 bool EllPoint::Is_inf()
 {
 	long int zero = 0;
-	if (mpz_cmp_si(x, zero) == 0 && mpz_cmp_si(y, zero)==0)
+	if (mpz_cmp_si(jx, zero) == 0 && mpz_cmp_si(jy, 1)==0&&mpz_cmp_si(jz, 0)==0)
 	{
 		return true;
 	}
@@ -359,6 +379,10 @@ bool EllPoint::Is_in_ell()
 	if (Is_inf())
 	{
 		return true;
+	}
+	if(Is_xy==0)
+	{
+		Pointaddxy(this);
 	}
 	mpz_t y2, x3, ax;
 	mpz_init(y2);
@@ -384,6 +408,10 @@ bool EllPoint::Is_in_ell()
 }
 void EllPoint::print()
 {
+	if(Is_xy==0)
+	{
+		Pointaddxy(this);
+	}
 	printf("x:");
 	mpz_printf(x);
 	printf("y:");
@@ -455,6 +483,10 @@ void EllPoint::Add(EllPoint *p, EllPoint *q)
 	{
 		Setp(p);
 		return;
+	}
+	if(q->Is_xy==0)
+	{
+		Pointaddxy(q);
 	}
 	mpz_t t1,t2,t3,t4;
 	mpz_t x3, y3, z3;
@@ -533,9 +565,10 @@ void EllPoint::Sub(EllPoint* p, EllPoint* q)
 	unsigned long int zero = 0;
 	mpz_t y;
 	mpz_init_set_ui(y,0);
-	//mpz_init(y);
-	//mpz_neg(y,y);
-	//mpz_mod(y,y,P256Para.p);
+	if(q->Is_xy==0)
+	{
+		Pointaddxy(q);
+	}
 	Fp_Sub(y, y, q->y);
 	mi.Setp(q->x, y);
 	Add(p, &mi);
@@ -575,6 +608,7 @@ void EllPoint::wNafMul(mpz_t k, EllPoint* op)
 
 	}
 	Setp(&inf);
+	Pointaddxy(this);
 }
 void EllPoint::FixedMul(mpz_t k)
 {
@@ -595,6 +629,7 @@ void EllPoint::FixedMul(mpz_t k)
 
 	}
 	Setp(&inf);
+	Pointaddxy(this);
 }
 void EllPoint::Mul(mpz_t k, EllPoint* op)
 {
@@ -618,6 +653,7 @@ void EllPoint::Mul(mpz_t k, EllPoint* op)
 		}
 	}
 	Setp(&inf);
+	Pointaddxy(this);
 }
 void EllPoint::MulP(mpz_t k,EllPoint* op)
 {
@@ -627,6 +663,7 @@ void EllPoint::MulP(mpz_t k,EllPoint* op)
 		return;
 	}
 	Mul(k,op);
+	Pointaddxy(this);
 }
 void EllPoint::MP_Mul(mpz_t k,mpz_t l,EllPoint *P,EllPoint* Q)
 {
@@ -662,5 +699,6 @@ void EllPoint::MP_Mul(mpz_t k,mpz_t l,EllPoint *P,EllPoint* Q)
 		inf.Add(&R[m][n],&inf);
 	}
 	Setp(&inf);
+	Pointaddxy(this);
 }
 

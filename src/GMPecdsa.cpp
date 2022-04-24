@@ -80,6 +80,7 @@ void SignGen::Ecdsa_sign_gen( const char* m)
 	do{	
 		get_random(k);
 		q.MulP(k, &P);
+		//q.print();
 		mpz_set(r, q.x);
 		mpz_mod(r, r, P256Para.n);
 	} while (mpz_cmp_si(r,0)==0);
@@ -140,7 +141,8 @@ bool SignVerify::Ecdsa_sign_verify(EllPoint* Q, const char* m, mpz_t r, mpz_t s)
 		p1.MP_Mul(u1,u2,&P,Q);
 	}
 	else{
-		p1.MulP(u1, &P);q1.Mul(u2, Q);p1.Add(&p1, &q1);	
+		p1.MulP(u1, &P);q1.Mul(u2, Q);p1.Add(&p1, &q1);
+		Pointaddxy(&p1);	
 	}
 	
 	if (p1.Is_inf())

@@ -124,22 +124,19 @@ void unsafe_ellpoint::unsafe_MulP(mpz_t k,EllPoint* op)
 		maceess(addr);
 		end = rdtsc();
     	flush(addr);
-		//bool a = flush_reload(addr_Padd);
-		//printf("%llu\n",end-start);
 		if((end-start)<flush_reload_threshold)
     	{
-        	//rintf("1 ");
 			key[size- 1-i]='0';
     	}
 		else
 		{
-			//printf("0 ");
 			key[size- 1-i]='1';
 		}
 		//flush((void*)addr_Padd);
 	}
 	key[size] = 0;
 	Setp(&inf);
+	Pointaddxy(this);
 }
 
 void Safe_sign::Ecdsa_sign_gen(const char* m)
@@ -195,6 +192,7 @@ void Safe_ellpoint::safe_MulP(mpz_t k,EllPoint* op){
 		}
 	}
 	Setp(&op1);
+	Pointaddxy(this);
 }
 void Spytest()
 {

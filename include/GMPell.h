@@ -13,13 +13,13 @@ void Fp_MulN(mpz_t rop, mpz_t op1, mpz_t op2);
 inline void Fp_Add(mpz_t rop, mpz_t op1, mpz_t op2);
 inline void Fp_Sub(mpz_t rop, mpz_t op1, mpz_t op2);
 void Mpz2wNAF(mpz_t k, vector<long int>& wNaf, int w);
-
 class EllPoint
 {
 private:
 	void FixedMul(mpz_t k);
 	void wNafMul(mpz_t k, EllPoint* op);
 public:
+	bool Is_xy;
 	mpz_t x;
 	mpz_t y;
 	mpz_t jx;
@@ -42,6 +42,7 @@ public:
 	void MulP(mpz_t k, EllPoint* op);
 	void MP_Mul(mpz_t k,mpz_t l,EllPoint *P,EllPoint* Q);
 };
+void Pointaddxy(EllPoint* p);
 class FixedPoint
 {
 public:
@@ -53,6 +54,7 @@ public:
 		{
 			FixedP[i] = new EllPoint;
 			FixedP[i]->Pdouble(FixedP[i - 1]);
+			Pointaddxy(FixedP[i]);
 		}
 	}
 	~FixedPoint()

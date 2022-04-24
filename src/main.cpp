@@ -190,7 +190,18 @@ void test1(int argc,char** argv)
 int main(int argc,char** argv)
 {
 	test1(argc,argv);
-
+	/*
+	EllPoint P;
+	mpz_t x;
+	mpz_init_set_si(x,0);
+	mpz_t y;
+	mpz_init_set_si(y,1);
+	P.Setp(x,x);
+	P.print();
+	Pointaddxy(&P);
+	P.print();
+	mpz_printf(P.jy);
+	mpz_printf(P.jz);*/
 	//testspy();
 }
 
